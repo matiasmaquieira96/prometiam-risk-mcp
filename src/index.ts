@@ -38,7 +38,9 @@ async function main() {
   const server = new McpServer(
     {
       name: 'prometiam-risk',
-      version: '0.2.0',
+      // Keep in step with package.json — this is the version MCP clients display.
+      // It silently drifted to 0.2.0 while the package shipped 0.2.2.
+      version: '0.2.3',
     },
     {
       instructions:

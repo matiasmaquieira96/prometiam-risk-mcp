@@ -3,7 +3,7 @@
   "name": "io.github.matiasmaquieira96/risk-mcp",
   "title": "Prometiam Risk Intelligence",
   "description": "EU + UK company data, KYB & sanctions screening (ES/FR/GB/IE/PL) as native MCP tools.",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "websiteUrl": "https://www.prometiam.com/risk-api",
   "repository": {
     "url": "https://github.com/matiasmaquieira96/prometiam-risk-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "prometiam-risk-mcp",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "transport": {
         "type": "stdio"
       },
