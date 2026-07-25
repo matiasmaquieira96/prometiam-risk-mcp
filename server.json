@@ -1,9 +1,9 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.matiasmaquieira96/risk-mcp",
-  "title": "Prometiam Risk Intelligence",
-  "description": "EU + UK company data, KYB & sanctions screening (ES/FR/GB/IE/PL) as native MCP tools.",
-  "version": "0.2.3",
+  "title": "Prometiam Company Data",
+  "description": "Company data for Spain, France, the UK, Ireland and Poland — registry, KYB and sanctions.",
+  "version": "0.2.4",
   "websiteUrl": "https://www.prometiam.com/risk-api",
   "repository": {
     "url": "https://github.com/matiasmaquieira96/prometiam-risk-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "prometiam-risk-mcp",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "transport": {
         "type": "stdio"
       },

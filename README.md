@@ -1,6 +1,6 @@
 # `prometiam-risk-mcp`
 
-> Model Context Protocol server for the **Prometiam Risk Intelligence API** — EU + UK company-registry data, sanctions screening, and corporate-event monitoring as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
+> Model Context Protocol server for the **Prometiam company data API** — official company-registry data for Spain, France, the UK, Ireland and Poland, plus directors, corporate events, insolvency, VAT/LEI lookup and sanctions screening, as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
 
 [![npm version](https://img.shields.io/npm/v/prometiam-risk-mcp.svg)](https://www.npmjs.com/package/prometiam-risk-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

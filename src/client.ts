@@ -1,5 +1,5 @@
 /**
- * Thin HTTP client for the Prometiam Risk Intelligence API.
+ * Thin HTTP client for the Prometiam company data API.
  *
  * Reads the API key from the PROMETIAM_API_KEY environment variable.
  * Falls back to PROMETIAM_BASE_URL when set (useful for local testing).

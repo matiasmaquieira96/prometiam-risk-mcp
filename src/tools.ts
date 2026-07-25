@@ -1,5 +1,5 @@
 /**
- * MCP tool definitions for the Prometiam Risk Intelligence API.
+ * MCP tool definitions for the Prometiam company data API.
  *
  * Each tool wraps one Risk API endpoint, with zod-validated input schemas
  * that get auto-converted to JSON Schema in the MCP tools/list response.

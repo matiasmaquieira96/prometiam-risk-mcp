@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Prometiam Risk Intelligence — MCP server.
+ * Prometiam Company Data — MCP server.
  *
  * Exposes the Prometiam Risk API as Model Context Protocol tools so any
  * MCP-compatible client (Claude Desktop, Cursor, Continue, Cline, etc.)
@@ -40,7 +40,7 @@ async function main() {
       name: 'prometiam-risk',
       // Keep in step with package.json — this is the version MCP clients display.
       // It silently drifted to 0.2.0 while the package shipped 0.2.2.
-      version: '0.2.3',
+      version: '0.2.4',
     },
     {
       instructions:
