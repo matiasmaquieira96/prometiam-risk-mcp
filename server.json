@@ -1,0 +1,85 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.matiasmaquieira96/risk-mcp",
+  "title": "Prometiam Risk Intelligence",
+  "description": "EU + UK company data, KYB & sanctions screening (ES/FR/GB/IE/PL) as native MCP tools.",
+  "version": "0.2.2",
+  "websiteUrl": "https://www.prometiam.com/risk-api",
+  "repository": {
+    "url": "https://github.com/matiasmaquieira96/prometiam-risk-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "prometiam-risk-mcp",
+      "version": "0.2.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "PROMETIAM_API_KEY",
+          "description": "Prometiam Risk API key (rk_live_* or rk_test_*). Get a free key at https://www.prometiam.com/signup",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "PROMETIAM_BASE_URL",
+          "description": "Override the API base URL. Default: https://api.prometiam.com/functions/v1/risk-api",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol/registry": {
+      "categories": [
+        "finance",
+        "business",
+        "open-data"
+      ]
+    },
+    "com.prometiam": {
+      "tools": [
+        "companies_search",
+        "company_detail",
+        "events_search",
+        "events_timeline",
+        "event_detail",
+        "people_search",
+        "person_detail",
+        "directors_network",
+        "sanctions_screen",
+        "sanctions_entity",
+        "vat_validate",
+        "lei_lookup",
+        "lei_search",
+        "lei_relationships",
+        "insolvency_search",
+        "insolvency_record",
+        "notice_detail",
+        "coverage",
+        "account",
+        "monitor_list",
+        "monitor_get",
+        "monitor_subscribe",
+        "monitor_stop",
+        "prospect_companies_search",
+        "prospect_people_search",
+        "prospect_company_contacts",
+        "prospect_suppress"
+      ],
+      "countries": [
+        "ES",
+        "FR",
+        "GB",
+        "IE",
+        "PL"
+      ],
+      "data_residency": "EU (Frankfurt)",
+      "license": "MIT"
+    }
+  }
+}
