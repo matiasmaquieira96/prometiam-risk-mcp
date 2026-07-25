@@ -1,0 +1,43 @@
+name: Publish to MCP registry
+
+# Publishes server.json to the official MCP registry (registry.modelcontextprotocol.io)
+# using GitHub Actions OIDC — no stored secrets and no personal access tokens.
+#
+# The server namespace is io.github.matiasmaquieira96/risk-mcp, and the registry authorises
+# publication by checking the OIDC token's repository_owner claim. This repository is owned by
+# matiasmaquieira96, so the claim matches and the publish is allowed.
+#
+# The registry requires server.json's version to equal the version already published on npm,
+# and the npm package must carry a matching `mcpName` field to prove ownership. Both hold for
+# 0.2.2, so run this only after `npm publish` has landed.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - 'server.json'
+      - '.github/workflows/publish-registry.yml'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required to mint the OIDC token
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install mcp-publisher
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/download/v1.8.0/mcp-publisher_linux_amd64.tar.gz" -o mcp-publisher.tar.gz
+          tar -xzf mcp-publisher.tar.gz mcp-publisher
+          chmod +x mcp-publisher
+          ./mcp-publisher --help >/dev/null
+
+      - name: Log in via GitHub OIDC
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish server.json
+        run: ./mcp-publisher publish
