@@ -1,6 +1,6 @@
 # `prometiam-risk-mcp`
 
-> Model Context Protocol server for the **Prometiam company data API** — official company-registry data for Spain, France, the UK, Ireland and Poland, plus directors, corporate events, insolvency, VAT/LEI lookup and sanctions screening, as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
+> Model Context Protocol server for the **Prometiam company data API** — official company-registry data for Spain, France, the UK, Ireland, Poland and Norway, plus directors, corporate events, insolvency, VAT/LEI lookup and sanctions screening, as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
 
 [![npm version](https://img.shields.io/npm/v/prometiam-risk-mcp.svg)](https://www.npmjs.com/package/prometiam-risk-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -8,38 +8,42 @@
 
 ## What you get
 
-26 MCP tools that wrap the [Prometiam Risk API](https://www.prometiam.com/risk-api/docs):
+28 MCP tools that wrap the [Prometiam Risk API](https://www.prometiam.com/risk-api/docs):
 
 | Tool | Description |
 |---|---|
-| `companies_search` | Search EU + UK companies by name, NIF (ES), SIREN/SIRET (FR), or company_number (UK). |
-| `company_detail` | Full company profile by Prometiam ID — officers, registry coordinates, capital, status. |
+| `companies_search` | Search EU + UK companies by name, NIF (ES), SIREN/SIRET (FR), company_number (UK), or organisation number (NO). |
+| `company_detail` | Full company profile by Prometiam ID — officers, registry coordinates, capital, status. `include=risk_flags` attaches published tax-debt / debarment signals (ES). |
 | `events_search` | Search normalized corporate events: capital changes, director changes, dissolutions, mergers, insolvency. |
 | `events_timeline` | Chronological event history for one company (oldest first). |
 | `event_detail` | A single corporate-event record by ID, with before/after values and source notice. |
 | `people_search` | Search officers / directors / shareholders by name across registries. |
 | `person_detail` | Officer / director profile with full appointment history across companies. |
 | `directors_network` | Cross-directorship rollup — people appointed to many companies (nominee/hub detection, ES). |
-| `sanctions_screen` | Trigram-fuzzy match against five sanctions lists: EU consolidated, UN, OFAC, UK OFSI, and the French Registre des gels. |
+| `sanctions_screen` | Trigram-fuzzy match against 44,000+ active designations — five sanctions lists (EU consolidated, UN, OFAC, UK OFSI, French Registre des gels) plus 11 US export-control lists (BIS Entity List, Denied Persons, Unverified, MEU; State ITAR-Debarred, ISN; OFAC SSI, CMIC, MBS, PLC, CAPTA). Refreshed daily. `include_pep=true` adds a PEP block (beta, ES, national politicians only — no relatives or close associates). |
 | `sanctions_entity` | Full detail for one sanctions entity by ID — aliases, programme, listing date. |
 | `vat_validate` | Validate an EU VAT number against VIES (27 EU states + XI) — returns registered name/address when valid. |
 | `lei_lookup` | Look up a Legal Entity Identifier in the GLEIF global register — legal name, jurisdiction, status, address. |
 | `lei_search` | Resolve a company name to candidate LEIs (GLEIF full-text search). |
+| `lei_relationships` | GLEIF Level-2 ownership: direct and ultimate parents/children of an LEI. |
 | `insolvency_search` | Search insolvency / risk notices (bankruptcies, liquidations, judgments). |
+| `insolvency_notices_search` | Corporate insolvency notices from official gazettes in FR, DE, GB, AT, CH, NO, FI, US — distress coverage in markets with no registry held. Corporate only; personal insolvency is never returned. |
 | `insolvency_record` | A single insolvency / risk notice by ID, with related events. |
 | `notice_detail` | Registry gazette PDF metadata: edition, parse status, hash, raw text. |
 | `coverage` | Dataset coverage stats per country (companies, events, freshness). |
 | `account` | Calling key's plan, rate limits, remaining quota, and scopes. |
 | `monitor_list` | List companies subscribed to ongoing monitoring for this key. |
 | `monitor_get` | One monitored company by ID, with its alert history. |
-| `monitor_subscribe` | Subscribe a company to daily monitoring (events/status/sanctions → signed webhook). **Mutating.** |
+| `monitor_subscribe` | Subscribe a company to daily monitoring (events/status/sanctions → signed webhook). ES, IE and PL only. **Mutating.** |
 | `monitor_stop` | Stop monitoring a company and delete the subscription. **Mutating.** |
 | `prospect_companies_search` | Search companies by firmographics — sector group, NACE code, company age, employee band — for ICP / prospect-list building. |
 | `prospect_people_search` | Find contactable decision-makers (officers ES/FR, PSC owners GB) by seniority, department, and contact-route availability. Compliance-safe. |
 | `prospect_company_contacts` | Compliance-safe contact routes (role/company emails, phone, website, LinkedIn) published by the organisation. Suppression-filtered. |
 | `prospect_suppress` | Add an email/domain/LinkedIn/phone/person/company to the prospecting opt-out list (GDPR). **Mutating.** |
 
-Source: Spain (BORME), France (BODACC), United Kingdom (Companies House), Ireland (CRO), Poland (KRS) — 25M+ companies. Daily updates. EU data residency.
+Source: Spain (BORME), France (BODACC), United Kingdom (Companies House), Ireland (CRO), Poland (KRS), Norway (Brønnøysundregistrene / Enhetsregisteret, NLOD) — 26M+ companies. Daily updates. EU data residency.
+
+Officer/director data is held for Spain, France, the UK and Norway. Ireland and Poland are company-level for now. Norway has no corporate-event stream, so the event tools return nothing for `country=NO`.
 
 ## Install
 
@@ -77,7 +81,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
 }
 ```
 
-Restart Claude Desktop. The 22 tools appear in the tool list. Try:
+Restart Claude Desktop. The 28 tools appear in the tool list. Try:
 
 > "What's the Prometiam coverage today?"
 > "Search for companies named Mercadona in Spain."
@@ -142,7 +146,7 @@ Once installed and configured, you can verify the server lists tools without spi
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | PROMETIAM_API_KEY=rk_live_... npx -y prometiam-risk-mcp
 ```
 
-You should see a JSON-RPC response with all 22 tools and their schemas.
+You should see a JSON-RPC response with all 28 tools and their schemas.
 
 ## Rate limits & pricing
 

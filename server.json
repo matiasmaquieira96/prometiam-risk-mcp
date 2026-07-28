@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.matiasmaquieira96/risk-mcp",
   "title": "Prometiam Company Data",
-  "description": "Company data for Spain, France, the UK, Ireland and Poland — registry, KYB and sanctions.",
-  "version": "0.2.4",
+  "description": "Company data for Spain, France, the UK, Ireland, Poland and Norway — registry, KYB and sanctions.",
+  "version": "0.2.8",
   "websiteUrl": "https://www.prometiam.com/risk-api",
   "repository": {
     "url": "https://github.com/matiasmaquieira96/prometiam-risk-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "prometiam-risk-mcp",
-      "version": "0.2.4",
+      "version": "0.2.8",
       "transport": {
         "type": "stdio"
       },
@@ -58,6 +58,7 @@
         "lei_search",
         "lei_relationships",
         "insolvency_search",
+        "insolvency_notices_search",
         "insolvency_record",
         "notice_detail",
         "coverage",
@@ -76,7 +77,8 @@
         "FR",
         "GB",
         "IE",
-        "PL"
+        "PL",
+        "NO"
       ],
       "data_residency": "EU (Frankfurt)",
       "license": "MIT"

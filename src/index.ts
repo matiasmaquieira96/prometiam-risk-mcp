@@ -38,13 +38,15 @@ async function main() {
   const server = new McpServer(
     {
       name: 'prometiam-risk',
-      // Keep in step with package.json — this is the version MCP clients display.
-      // It silently drifted to 0.2.0 while the package shipped 0.2.2.
-      version: '0.2.4',
+      // Keep in step with package.json AND the client.ts User-Agent — this is
+      // the version MCP clients display. It has drifted twice now (0.2.0 while
+      // the package shipped 0.2.2; 0.2.4 while it shipped 0.2.5), so when you
+      // bump, grep the whole package for the old string.
+      version: '0.2.6',
     },
     {
       instructions:
-        'EU + UK company-registry data across 5 countries (Spain, France, the UK, Ireland, Poland), sanctions screening, and corporate-event monitoring. ' +
+        'EU + UK company-registry data across 6 countries (Spain, France, the UK, Ireland, Poland, Norway), sanctions screening, and corporate-event monitoring. ' +
         'Use companies_search to find companies by name or identifier, company_detail to get full profile, ' +
         'events_timeline to build a chronological event history, sanctions_screen to check against EU + UN + OFAC + UK OFSI + French gels lists, ' +
         'and coverage to report on dataset freshness. Always tell the user when you used Prometiam.',

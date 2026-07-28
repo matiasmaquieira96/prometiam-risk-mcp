@@ -10,7 +10,23 @@
 import { z } from 'zod'
 import { getClient, RiskApiError } from './client.js'
 
-const Country = z.enum(['ES', 'FR', 'GB', 'IE', 'PL']).describe('Country code: ES (Spain, BORME), FR (France, BODACC), GB (UK, Companies House), IE (Ireland, CRO), or PL (Poland, KRS). Ireland and Poland are company-level. Defaults to first country in the API key allowlist.')
+const Country = z.enum(['ES', 'FR', 'GB', 'IE', 'PL', 'NO']).describe('Country code: ES (Spain, BORME), FR (France, BODACC), GB (UK, Companies House), IE (Ireland, CRO), PL (Poland, KRS), or NO (Norway, Brønnøysundregistrene / Enhetsregisteret). Ireland and Poland are company-level (companies only). Norway has companies and officers but no corporate-event stream, so the event tools return nothing for NO. Defaults to first country in the API key allowlist.')
+
+/**
+ * Monitoring covers a NARROWER set than the registry corpus — see the
+ * `/monitor` request body in public/openapi.json, which pins country to
+ * ES/IE/PL. Norway, France and the UK have no monitoring implementation, so
+ * they must not be offered here: an accepted value the API cannot honour is a
+ * false capability, not a convenience.
+ */
+const MonitorCountry = z.enum(['ES', 'IE', 'PL']).describe('Country of the company to monitor: ES (default), IE, or PL. Monitoring is not available for the other registry countries.')
+
+/**
+ * The prospect contact layer is built per-country and does NOT include Norway.
+ * Deliberately mirrors the pre-Norway country set so NO is never advertised as
+ * a prospecting scope.
+ */
+const ProspectCountry = z.enum(['ES', 'FR', 'GB', 'IE', 'PL']).describe('Country code for the prospect layer: ES, FR, GB, IE or PL. Norway (NO) is not part of the prospect contact layer.')
 const Limit = z.number().int().min(1).max(100).default(20).describe('Maximum number of results to return (1–100, default 20).')
 const Cursor = z.string().optional().describe('Pagination cursor — pass the previous response\'s pagination.next_cursor to fetch the next page.')
 
@@ -47,13 +63,17 @@ export const TOOLS: ToolDef[] = [
   // ── Companies ────────────────────────────────────────────────────────────
   {
     name: 'companies_search',
-    description: 'Search EU + UK companies in official registries by name or identifier. Returns companies with legal form, capital, status, registry coordinates. Use country to scope the search to Spain (BORME), France (BODACC), the UK (Companies House), Ireland (CRO), or Poland (KRS). Fuzzy name results carry a match_score (0–100) and are ranked by relevance, best first.',
+    description: 'Search EU + UK companies in official registries by name or identifier. Returns companies with legal form, capital, status, registry coordinates. Use country to scope the search to Spain (BORME), France (BODACC), the UK (Companies House), Ireland (CRO), Poland (KRS), or Norway (Brønnøysundregistrene). Fuzzy name results carry a match_score (0–100) and are ranked by relevance, best first.',
     schema: z.object({
       name: z.string().optional().describe('Company name — fuzzy normalized match.'),
-      nif: z.string().optional().describe('Spanish NIF/CIF (exact match), e.g. A28015865.'),
+      // 'nif' was documented here but handleCompaniesSearch never reads it; the ES NIF/CIF
+      // exact-match field is company_number.
+
       siren: z.string().optional().describe('French SIREN (9 digits), e.g. 552032534.'),
       siret: z.string().optional().describe('French SIRET (14 digits).'),
       company_number: z.string().optional().describe('UK Companies House number, e.g. 00445790 or SC123456.'),
+      has_risk_flag: z.boolean().optional().describe('Spain only. Return only companies carrying a published risk flag (currently the AEAT >€600,000 tax-debtor list).'),
+      risk_flag_type: z.enum(['tax_debt', 'debarment', 'regulator_sanction', 'subsidy']).optional().describe('Spain only. Restrict to one flag type.'),
       country: Country.optional(),
       limit: Limit,
       cursor: Cursor,
@@ -62,11 +82,16 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'company_detail',
-    description: 'Fetch a single company by Prometiam internal ID. Returns full profile including officers, registry coordinates, founding date, capital, and current status. Get an ID from companies_search first.',
+    description: 'Fetch a single company by Prometiam internal ID. Returns full profile including officers, registry coordinates, founding date, capital, and current status. Get an ID from companies_search first. Pass include to attach extra blocks — notably risk_flags (published tax-debt / debarment signals) and insolvency.',
     schema: z.object({
       id: z.union([z.number().int(), z.string()]).describe('Prometiam internal company ID (integer).'),
+      country: Country.optional(),
+      include: z.string().optional().describe('Comma-separated extra blocks: procurement, insolvency, lei, prospect, risk_flags — or all. risk_flags is Spain only and each row states whether its identifier was read directly from the source or reconstructed with name corroboration.'),
     }),
-    handler: (args) => safeCall(() => getClient().get(`/companies/${args.id}`)),
+    handler: (args) => safeCall(() => {
+      const { id, ...rest } = args
+      return getClient().get(`/companies/${id}`, rest)
+    }),
   },
 
   // ── Corporate events ─────────────────────────────────────────────────────
@@ -87,7 +112,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'events_timeline',
-    description: 'Returns the chronological event history for one company (oldest first). Useful for building lifecycle timelines from incorporation through capital changes, director appointments, and dissolution. One of company_number or company_name is required.',
+    description: 'Returns the event history for one company, newest first. Useful for building lifecycle timelines from incorporation through capital changes, director appointments, and dissolution. One of company_number or company_name is required.',
     schema: z.object({
       company_number: z.string().optional().describe('Registry number — exact match (recommended).'),
       company_name: z.string().optional().describe('Company name — fuzzy match.'),
@@ -108,7 +133,7 @@ export const TOOLS: ToolDef[] = [
   // ── People ───────────────────────────────────────────────────────────────
   {
     name: 'people_search',
-    description: 'Search officers / directors / shareholders by name across EU + UK registries. Returns matching people with their appointment counts, ranked by a fuzzy-match match_score (0–100), best first. Use person_detail for a full appointment history. Scope with country.',
+    description: 'Search officers / directors / shareholders by name across EU + UK registries. Returns matching people with their appointment counts, ranked by a fuzzy-match match_score (0–100), best first. Use person_detail for a full appointment history. Scope with country — officer-level data is held for Spain, France, the UK and Norway; Ireland and Poland are company-level only.',
     schema: z.object({
       name: z.string().min(2).describe('Person name — normalized pattern match (min 2 characters).'),
       country: Country.optional(),
@@ -142,11 +167,18 @@ export const TOOLS: ToolDef[] = [
   // ── Sanctions ────────────────────────────────────────────────────────────
   {
     name: 'sanctions_screen',
-    description: 'Screen a person or entity name against five sanctions lists — EU consolidated, UN, OFAC, UK OFSI, and the French Registre des gels — with trigram fuzzy match. Returns matches with confidence score (0–100), source list, and aliases. Use threshold to control match strictness.',
+    description: 'Screen a person or entity name against 44,000+ active sanctions and export-control designations with trigram fuzzy match. Covers five sanctions lists — EU consolidated, UN, OFAC, UK OFSI, and the French Registre des gels — plus 11 US export-control lists (BIS Entity List, Denied Persons, Unverified, Military End User; State ITAR-Debarred and Nonproliferation; OFAC SSI, CMIC, MBS, PLC, CAPTA). Refreshed daily. Returns matches with confidence score (0–100), source list, and aliases. Use threshold to control match strictness.',
     schema: z.object({
       name: z.string().min(2).describe('Name to screen.'),
       threshold: z.number().int().min(50).max(100).default(80).describe('Minimum match-confidence percentage (50–100, default 80).'),
-      entity_type: z.enum(['person', 'entity', 'vessel', 'any']).default('any'),
+      // Values must match sanctions_entity.entity_type literally. 'any' and 'entity' were
+      // in this enum and matched NOTHING -- and 'any' was the default, so every screen that
+      // did not override it returned zero hits with HTTP 200, i.e. a silent false negative
+      // on a compliance control. Omit for no filter.
+      entity_type: z.enum(['person', 'company', 'vessel', 'aircraft', 'unknown']).optional()
+        .describe('Restrict to one entity type. Omit to screen all types.'),
+      include_pep: z.boolean().optional().describe('Also screen against politically exposed persons (BETA, Spain only, from Wikidata) and return a separate pep block. Membership is by OCCUPATION, not office: 44% of the set has no recorded office and local officials (6,108) outnumber national ones (3,191). Every hit carries positions[], pep_tier and has_current_office — read them rather than treating a match as a determination. Holds no relatives or close associates, so on its own it does not satisfy a FATF PEP obligation.'),
+      pep_min_tier: z.enum(['national', 'regional', 'local']).optional().describe('Only return PEP hits at or above this tier. Omit to receive every hit, including those with no recorded office.'),
       limit: z.number().int().min(1).max(100).default(20),
     }),
     handler: (args) => safeCall(() => getClient().get('/sanctions/screen', args)),
@@ -178,6 +210,20 @@ export const TOOLS: ToolDef[] = [
       cursor: Cursor,
     }),
     handler: (args) => safeCall(() => getClient().get('/search', args)),
+  },
+  {
+    name: 'insolvency_notices_search',
+    description: 'Search CORPORATE insolvency notices published in official gazettes and registers across France, Germany, the UK, Austria, Switzerland, Norway, Finland and the US. Use this for distress coverage in markets where no company registry is held (DE, AT, CH, FI, US) — there the notices stand alone and are not linked to a company record. Norway has full registry coverage, so NO notices can be cross-referenced against companies_search with country=NO. Personal/consumer insolvency is deliberately excluded and is never returned. Distinct from insolvency_search, which covers the linked ES/FR/GB risk-notice corpus.',
+    schema: z.object({
+      name: z.string().min(2).optional().describe('Company name — matched anywhere in the normalized name (min 2 characters).'),
+      country: z.enum(['FR', 'DE', 'GB', 'AT', 'CH', 'NO', 'FI', 'US']).optional().describe('Insolvency-coverage country. This is NOT the same set as the company-registry countries.'),
+      event_type: z.string().optional().describe('Notice type, e.g. insolvency, dissolution, liquidation, forced_sale.'),
+      date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Filing date on or after this date (YYYY-MM-DD).'),
+      date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Filing date on or before this date (YYYY-MM-DD).'),
+      limit: Limit,
+      cursor: Cursor,
+    }),
+    handler: (args) => safeCall(() => getClient().get('/insolvency/search', args)),
   },
   {
     name: 'insolvency_record',
@@ -264,11 +310,11 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'monitor_subscribe',
-    description: 'Subscribe a company to ongoing monitoring. New corporate events, status changes, and sanctions matches are scanned daily and POSTed to your webhook_url (HMAC-SHA256 signed). Returns the monitor ID and a webhook_secret (shown once). This creates a persistent subscription — confirm intent before calling.',
+    description: 'Subscribe a company to ongoing monitoring. New corporate events, status changes, and sanctions matches are scanned daily and POSTed to your webhook_url (HMAC-SHA256 signed). Returns the monitor ID and a webhook_secret (shown once). Available for Spain (ES), Ireland (IE) and Poland (PL) only. This creates a persistent subscription — confirm intent before calling.',
     schema: z.object({
       company_id: z.union([z.number().int(), z.string()]).describe('Prometiam internal company ID to monitor (from companies_search / company_detail).'),
       webhook_url: z.string().url().describe('HTTPS URL that receives signed alert POSTs.'),
-      country: Country.optional(),
+      country: MonitorCountry.optional(),
       label: z.string().optional().describe('Optional human-friendly label for this subscription.'),
       events: z.array(z.string()).optional().describe('Optional list of event types to filter alerts to (default: all).'),
     }),
@@ -286,9 +332,9 @@ export const TOOLS: ToolDef[] = [
   // ── Prospecting (compliance-safe B2B contact intelligence) ─────────────────
   {
     name: 'prospect_companies_search',
-    description: 'Search companies by firmographics for ICP/prospect-list building: sector group (technology, finance, manufacturing, retail_wholesale, ...), NACE code prefix, company age, and employee band (INSEE-sourced for FR, estimated elsewhere). Returns companies with derived firmographics. Get decision-makers for a result via prospect_company_people.',
+    description: 'Search companies by firmographics for ICP/prospect-list building: sector group (technology, finance, manufacturing, retail_wholesale, ...), NACE code prefix, company age, and employee band (INSEE-sourced for FR, estimated elsewhere). Returns companies with derived firmographics. Get decision-makers for a result via prospect_people_search with the company filter.',
     schema: z.object({
-      country: Country.optional(),
+      country: ProspectCountry.optional(),
       stats: z.enum(['sector_group', 'employee_band']).optional().describe('Audience-sizing mode: returns bucket counts for this dimension (instant, pre-aggregated) instead of a company list.'),
       sector_group: z.enum(['agriculture', 'mining_energy', 'manufacturing', 'utilities', 'construction', 'retail_wholesale', 'transport_logistics', 'hospitality', 'technology', 'finance', 'real_estate', 'professional_services', 'business_services', 'public_sector', 'education', 'healthcare', 'arts_entertainment', 'other_services', 'other']).optional().describe('Coarse sector group derived from the registry industry code.'),
       sector: z.string().optional().describe('NACE code prefix, e.g. "62" (computer programming), "47" (retail), "41" (construction).'),
@@ -304,7 +350,7 @@ export const TOOLS: ToolDef[] = [
     name: 'prospect_people_search',
     description: 'Find contactable decision-makers across EU registries: officers/directors (ES, FR) or beneficial owners (GB PSC), mapped from registry roles to functional titles + seniority. Filter by seniority, department, and whether a company/role contact route exists. Compliance-safe: registry-published roles + org-published routes only, never inferred personal emails. Scope with country (ES/FR/GB).',
     schema: z.object({
-      country: Country.optional(),
+      country: ProspectCountry.optional(),
       stats: z.enum(['seniority', 'department']).optional().describe('Audience-sizing mode: returns bucket counts for this dimension (instant) instead of a people list.'),
       seniority: z.enum(['owner', 'c_level', 'board', 'manager', 'other']).optional().describe('Seniority tier. c_level = CEO/MD/Gérant/President; board = directors; owner = shareholders/PSC.'),
       department: z.enum(['executive', 'governance', 'ownership', 'finance', 'legal', 'other']).optional().describe('Functional department derived from the registry role.'),
@@ -323,7 +369,7 @@ export const TOOLS: ToolDef[] = [
     description: 'Get the compliance-safe contact routes for a company (role/company emails, phones, website, LinkedIn) published by the organisation in official registers or its own website. Suppression-filtered. Not verified personal mailboxes. Get the company ID from companies_search or prospect_companies_search.',
     schema: z.object({
       id: z.union([z.number().int(), z.string()]).describe('Prometiam surface company ID.'),
-      country: Country.optional(),
+      country: ProspectCountry.optional(),
       type: z.enum(['email', 'phone', 'website', 'linkedin']).optional().describe('Filter to one route type.'),
     }),
     handler: (args) => safeCall(() => getClient().get(`/prospect/company/${args.id}/contacts`, args)),
@@ -337,5 +383,26 @@ export const TOOLS: ToolDef[] = [
       reason: z.string().optional().describe('Optional reason (opt_out, complaint, legal_request, bounce).'),
     }),
     handler: (args) => safeCall(() => getClient().post('/prospect/suppress', args)),
+  },
+
+  // ── Sanctions change feed / watchlists ───────────────────────────────────
+  // Added 2026-07-28: both endpoints were live but absent from openapi.json, so the parity
+  // guard could not see they had no tool. Documenting the paths surfaced the gap immediately.
+  {
+    name: 'sanctions_changes',
+    description: 'List additions, removals and amendments detected on the sanctions lists, newest first. Use this to answer "what changed recently" without re-screening a whole book of business — each change carries the entity it affects, so a hit can be joined back to sanctions_entity.',
+    schema: z.object({
+      since: z.string().optional().describe('ISO date (YYYY-MM-DD). Only changes detected after it.'),
+      change_type: z.enum(['listed', 'delisted', 'updated']).optional().describe('Restrict to one kind of change.'),
+      list: z.string().optional().describe('Comma-separated source lists, e.g. "EU,OFAC".'),
+      limit: z.number().int().min(1).max(100).default(20).describe('Maximum changes to return (1–100, default 20).'),
+    }),
+    handler: (args) => safeCall(() => getClient().get('/sanctions/changes', args)),
+  },
+  {
+    name: 'sanctions_watchlist',
+    description: 'Return your sanctions watchlists and any recent hits against them. Requires the sanctions_watch scope; the number of entries allowed depends on your tier. Read-only — use the REST API to add or remove entries.',
+    schema: z.object({}),
+    handler: () => safeCall(() => getClient().get('/sanctions/watchlist', {})),
   },
 ]
