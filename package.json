@@ -19,7 +19,8 @@
     "prepublishOnly": "npm run check:parity && npm run build",
     "start": "node dist/index.js",
     "dev": "tsc --watch",
-    "smoke": "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}' | node dist/index.js"
+    "smoke": "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}' | node dist/index.js",
+    "check:surfaces": "node scripts/check-surfaces.mjs"
   },
   "keywords": [
     "mcp",

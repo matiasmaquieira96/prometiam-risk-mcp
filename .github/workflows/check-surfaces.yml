@@ -1,0 +1,36 @@
+name: Check publish surfaces
+
+# This server is published to four places that drift independently and silently:
+# this repo, npm, the MCP registry, and the repo's own GitHub metadata.
+#
+# On 2026-07-28 all four disagreed — the repo, npm and the registry all sat at 0.2.4 while the
+# source was at 0.2.8, and the registry's public listing still described the product as
+# "Spain, France, the UK, Ireland and Poland", omitting Norway, which had been live for two
+# days. Nothing reported a problem because nothing was watching. This job watches.
+#
+# It runs weekly rather than on push: drift is a slow failure, and during a release the
+# surfaces are legitimately out of step for a few minutes.
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'   # Mondays 07:00 UTC
+  workflow_dispatch: {}
+  push:
+    paths:
+      - 'scripts/check-surfaces.mjs'
+      - '.github/workflows/check-surfaces.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Compare every publish surface
+        # Exits non-zero on any drift. A red run here means a surface is stale — most often
+        # that npm or the registry is behind this repo, i.e. a release was only half-finished.
+        run: node scripts/check-surfaces.mjs
