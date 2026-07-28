@@ -40,4 +40,23 @@ jobs:
         run: ./mcp-publisher login github-oidc
 
       - name: Publish server.json
-        run: ./mcp-publisher publish
+        # Idempotent on purpose. This job fires on any push that touches server.json, but the
+        # registry rejects a version it already holds with
+        #   400 {"message":"invalid version: cannot publish duplicate version"}
+        # That happens whenever server.json is edited without a version bump, or when a release
+        # was already published by hand — which is exactly what failed run 30396469548 on
+        # 2026-07-28. A already-published version is the desired end state, not an error, so
+        # treat that one message as success and let every other failure fail the job.
+        run: |
+          # pipefail is REQUIRED: the default runner shell is `bash -e {0}` without it, so the
+          # exit status of `publish | tee` would be tee's (always 0) and this guard would pass
+          # every failure through silently.
+          set -o pipefail
+          if ./mcp-publisher publish 2>&1 | tee publish.log; then
+            echo "published $(grep -o 'version .*' publish.log | tail -1)"
+          elif grep -q 'cannot publish duplicate version' publish.log; then
+            echo "::notice::registry already holds this version — nothing to publish"
+          else
+            echo "::error::publish failed for a reason other than duplicate version"
+            exit 1
+          fi
