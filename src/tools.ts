@@ -66,12 +66,18 @@ export const TOOLS: ToolDef[] = [
     description: 'Search EU + UK companies in official registries by name or identifier. Returns companies with legal form, capital, status, registry coordinates. Use country to scope the search to Spain (BORME), France (BODACC), the UK (Companies House), Ireland (CRO), Poland (KRS), or Norway (Brønnøysundregistrene). Fuzzy name results carry a match_score (0–100) and are ranked by relevance, best first.',
     schema: z.object({
       name: z.string().optional().describe('Company name — fuzzy normalized match.'),
-      // 'nif' was documented here but handleCompaniesSearch never reads it; the ES NIF/CIF
-      // exact-match field is company_number.
-
+      // 'nif' was removed here because handleCompaniesSearch did not read it. It does now
+      // (risk-api dc4b37b5, 2026-08-30): nif and vat are aliases for company_number. Keeping
+      // it absent was not neutral -- the only working field was labelled "UK Companies House
+      // number", so a model holding a Spanish NIF was steered away from the one parameter
+      // that would have answered it.
+      nif: z.string().optional().describe('Spanish NIF/CIF — exact match, e.g. A78053147. Alias of company_number.'),
+      vat: z.string().optional().describe('VAT / tax identifier — exact match. Alias of company_number.'),
       siren: z.string().optional().describe('French SIREN (9 digits), e.g. 552032534.'),
       siret: z.string().optional().describe('French SIRET (14 digits).'),
-      company_number: z.string().optional().describe('UK Companies House number, e.g. 00445790 or SC123456.'),
+      // Resolves per country: NIF for ES, SIREN for FR, registration number for GB/IE/PL/NO.
+      // Describing it as UK-only was wrong and cost real lookups.
+      company_number: z.string().optional().describe('Registry identifier — exact match. Resolves per country: Spanish NIF/CIF (A78053147), French SIREN, UK Companies House number (00445790, SC123456), or the IE/PL/NO registration number.'),
       has_risk_flag: z.boolean().optional().describe('Spain only. Return only companies carrying a published risk flag (currently the AEAT >€600,000 tax-debtor list).'),
       risk_flag_type: z.enum(['tax_debt', 'debarment', 'regulator_sanction', 'subsidy']).optional().describe('Spain only. Restrict to one flag type.'),
       country: Country.optional(),

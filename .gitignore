@@ -7,3 +7,7 @@ dist/
 
 mcp-publisher.exe
 mcp-publisher.tar.gz
+
+# MCPB bundle: a build artifact (3MB, vendors node_modules). Rebuild with:
+#   mcpb pack <staging-dir> prometiam-risk-mcp.mcpb
+*.mcpb

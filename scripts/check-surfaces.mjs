@@ -30,6 +30,10 @@ const MCP_NAME = 'io.github.matiasmaquieira96/risk-mcp'
 // The registry has no exact-name lookup; ?name= ignores the filter and ?search=prometiam
 // returns nothing, because the server's NAME contains neither. Search the namespace owner.
 const REGISTRY_SEARCH = 'matiasmaquieira96'
+// Smithery qualified name. Org-owned namespace, created 2026-08-30 -- an account starts
+// with a personal namespace only, and publishing to one that does not exist fails with a
+// bare 404 "Namespace not found".
+const SMITHERY_NAME = 'prometiam/risk-mcp'
 
 // Every country that must appear in any public description of this server. Norway shipped
 // 2026-07-26 and was missing from the registry listing for two days; this catches the next one.
@@ -92,6 +96,15 @@ try {
   if ((npm.keywords || []).length < 20) {
     notes.push(`npm package has only ${(npm.keywords || []).length} keywords — these drive npm search discovery`)
   }
+  // The npm description is the ORIGIN of most third-party listings: Glama and Smithery
+  // scrape it. Only server.json and the MCP registry were country-checked, so a stale npm
+  // description propagated outward unnoticed -- on 2026-08-30 both Glama and PulseMCP still
+  // advertised five countries, Norway missing, five weeks after it shipped.
+  for (const c of COUNTRIES) {
+    if (!(npm.description || '').includes(c)) {
+      problems.push(`npm description omits ${c} — third-party catalogs scrape this field: "${npm.description}"`)
+    }
+  }
 } catch (e) {
   problems.push(`could not read npm: ${e.message}`)
 }
@@ -106,6 +119,13 @@ try {
   }
   const meta = await getJSON(`https://api.github.com/repos/${MIRROR}`, 'github api')
   if (!meta.description) problems.push('GitHub mirror has no description — it is a search/discovery surface')
+  else {
+    for (const c of COUNTRIES) {
+      if (!meta.description.includes(c)) {
+        notes.push(`GitHub mirror description omits ${c}: "${meta.description}"`)
+      }
+    }
+  }
   if (!meta.homepage) problems.push('GitHub mirror has no homepage set')
   if ((meta.topics || []).length < 5) {
     problems.push(`GitHub mirror has only ${(meta.topics || []).length} topics — GitHub topic pages are a discovery channel`)
@@ -144,6 +164,44 @@ try {
   }
 } catch (e) {
   problems.push(`could not read the MCP registry: ${e.message}`)
+}
+
+// ── third-party catalogs ──────────────────────────────────────────────────────
+// These are DOWNSTREAM of npm + the MCP registry, and they were assumed to pick the
+// server up automatically ("Glama + Smithery auto-scan npm and will list it with no
+// action", registries/INDEX.md). That held for Glama and PulseMCP; it did NOT for
+// Smithery, which on 2026-08-30 listed five competing company-registry servers and not
+// this one. Nothing anywhere reported that, because nothing was looking.
+//
+// Deliberately notes, not problems: getting listed needs a human with an account, so
+// failing CI on it would just train people to ignore the gate. Absence should be VISIBLE,
+// not blocking.
+// Look the server up BY QUALIFIED NAME, not via ?q=. Smithery's search is semantic: a
+// query for "prometiam" returns drug-discovery servers and no substring match at all, so
+// a presence check built on it reports "missing" even when the server is published. The
+// first version of this check did exactly that.
+try {
+  const res = await fetch(`https://registry.smithery.ai/servers/${SMITHERY_NAME}`,
+    { headers: { 'User-Agent': 'prometiam-surface-check' } })
+  if (res.status === 404) {
+    notes.push(`NOT listed on smithery.ai as ${SMITHERY_NAME} — publish with: smithery mcp publish ./prometiam-risk-mcp.mcpb -n ${SMITHERY_NAME}`)
+  } else if (!res.ok) {
+    notes.push(`smithery check inconclusive: HTTP ${res.status}`)
+  } else {
+    const sm = await res.json()
+    // registry.smithery.ai is a CACHED read replica of api.smithery.ai and lags a
+    // metadata write by some minutes -- an empty description here is not proof of one.
+    const desc = sm.description || ''
+    if (!desc) {
+      notes.push(`smithery listing has an empty description (replica may be stale; authoritative copy is api.smithery.ai) — fix with PATCH /servers/${encodeURIComponent(SMITHERY_NAME)}`)
+    } else {
+      for (const c of COUNTRIES) {
+        if (!desc.includes(c)) notes.push(`smithery listing omits ${c}`)
+      }
+    }
+  }
+} catch (e) {
+  notes.push(`smithery check skipped: ${e.message}`)
 }
 
 // ── report ────────────────────────────────────────────────────────────────────

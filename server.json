@@ -3,7 +3,7 @@
   "name": "io.github.matiasmaquieira96/risk-mcp",
   "title": "Prometiam Company Data",
   "description": "Company data for Spain, France, the UK, Ireland, Poland and Norway — registry, KYB and sanctions.",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "websiteUrl": "https://www.prometiam.com/risk-api",
   "repository": {
     "url": "https://github.com/matiasmaquieira96/prometiam-risk-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "prometiam-risk-mcp",
-      "version": "0.2.8",
+      "version": "0.2.9",
       "transport": {
         "type": "stdio"
       },

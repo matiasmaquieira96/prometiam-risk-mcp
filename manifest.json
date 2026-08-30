@@ -1,0 +1,65 @@
+{
+  "manifest_version": "0.2",
+  "name": "prometiam-risk-mcp",
+  "display_name": "Prometiam Company Data",
+  "version": "0.2.9",
+  "description": "Model Context Protocol server for the Prometiam company data API — official registry data for Spain, France, the UK, Ireland, Poland and Norway, plus directors and UK beneficial ownership, corporate events, insolvency notices, VAT (VIES) and LEI (GLEIF) lookup and sanctions screening, as native MCP tools for Claude, Cursor and any MCP-compatible client.",
+  "long_description": "Query official European company registries directly from your agent. Search companies by name or by registry identifier — Spanish NIF/CIF, French SIREN/SIRET, UK/IE/PL/NO registration number — and get legal form, capital, status, incorporation date and registry coordinates back. Beyond the registry itself: directors and appointments, UK beneficial ownership (PSC), corporate event timelines, cross-border insolvency notices, VAT validation through VIES, LEI lookup through GLEIF, and sanctions screening against OFAC, EU, UN and US export-control lists. Six countries are live: Spain (BORME), France (BODACC), the United Kingdom (Companies House), Ireland (CRO), Poland (KRS) and Norway (Brønnøysundregistrene). A free tier is available without a card.",
+  "author": {
+    "name": "Prometiam",
+    "email": "support@prometiam.com",
+    "url": "https://www.prometiam.com"
+  },
+  "homepage": "https://www.prometiam.com",
+  "documentation": "https://www.prometiam.com/docs",
+  "support": "https://github.com/matiasmaquieira96/prometiam-risk-mcp/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/matiasmaquieira96/prometiam-risk-mcp"
+  },
+  "license": "MIT",
+  "keywords": [
+    "company-registry",
+    "kyb",
+    "kyc",
+    "sanctions",
+    "compliance",
+    "due-diligence",
+    "borme",
+    "bodacc",
+    "companies-house",
+    "brreg",
+    "insolvency",
+    "beneficial-ownership",
+    "lei",
+    "vat",
+    "europe"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/index.js"
+      ],
+      "env": {
+        "PROMETIAM_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "Prometiam API key",
+      "description": "Your Prometiam API key, starting with rk_live_ (or rk_test_). The server refuses to start without one. Get a free key, no card required, at https://www.prometiam.com/signup",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "compatibility": {
+    "runtimes": {
+      "node": ">=18"
+    }
+  }
+}

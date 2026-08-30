@@ -1,6 +1,6 @@
 {
   "name": "prometiam-risk-mcp",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "mcpName": "io.github.matiasmaquieira96/risk-mcp",
   "description": "Model Context Protocol server for the Prometiam company data API — official registry data for Spain, France, the UK, Ireland, Poland and Norway, plus directors and UK beneficial ownership, corporate events, insolvency notices, VAT (VIES) and LEI (GLEIF) lookup and sanctions screening, as native MCP tools for Claude, Cursor and any MCP-compatible client.",
   "type": "module",

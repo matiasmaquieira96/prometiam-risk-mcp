@@ -8,7 +8,7 @@
 
 ## What you get
 
-28 MCP tools that wrap the [Prometiam Risk API](https://www.prometiam.com/risk-api/docs):
+30 MCP tools that wrap the [Prometiam Risk API](https://www.prometiam.com/risk-api/docs):
 
 | Tool | Description |
 |---|---|
@@ -22,6 +22,8 @@
 | `directors_network` | Cross-directorship rollup — people appointed to many companies (nominee/hub detection, ES). |
 | `sanctions_screen` | Trigram-fuzzy match against 44,000+ active designations — five sanctions lists (EU consolidated, UN, OFAC, UK OFSI, French Registre des gels) plus 11 US export-control lists (BIS Entity List, Denied Persons, Unverified, MEU; State ITAR-Debarred, ISN; OFAC SSI, CMIC, MBS, PLC, CAPTA). Refreshed daily. `include_pep=true` adds a PEP block (beta, ES, national politicians only — no relatives or close associates). |
 | `sanctions_entity` | Full detail for one sanctions entity by ID — aliases, programme, listing date. |
+| `sanctions_changes` | Additions, removals and amendments detected on the sanctions lists, newest first — answer "what changed" without re-screening a whole book of business. |
+| `sanctions_watchlist` | Your sanctions watchlists and any recent hits against them. Read-only; requires the `sanctions_watch` scope. |
 | `vat_validate` | Validate an EU VAT number against VIES (27 EU states + XI) — returns registered name/address when valid. |
 | `lei_lookup` | Look up a Legal Entity Identifier in the GLEIF global register — legal name, jurisdiction, status, address. |
 | `lei_search` | Resolve a company name to candidate LEIs (GLEIF full-text search). |
@@ -81,7 +83,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
 }
 ```
 
-Restart Claude Desktop. The 28 tools appear in the tool list. Try:
+Restart Claude Desktop. The 30 tools appear in the tool list. Try:
 
 > "What's the Prometiam coverage today?"
 > "Search for companies named Mercadona in Spain."
@@ -146,7 +148,7 @@ Once installed and configured, you can verify the server lists tools without spi
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | PROMETIAM_API_KEY=rk_live_... npx -y prometiam-risk-mcp
 ```
 
-You should see a JSON-RPC response with all 28 tools and their schemas.
+You should see a JSON-RPC response with all 30 tools and their schemas.
 
 ## Rate limits & pricing
 
