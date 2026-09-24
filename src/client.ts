@@ -6,6 +6,14 @@
  */
 
 const DEFAULT_BASE_URL = 'https://api.prometiam.com/functions/v1/risk-api'
+// A shared, public demo key with tight limits (30 requests a minute, 2,000 a day for everyone
+// who runs the server without a key of their own). It exists so an install works on the first
+// tool call; the quota message points at a free personal key. Rotated server-side if abused.
+export const DEMO_KEY = 'rk_live_mcpdemo_64f4c7338872fe6dfd8aa3db'
+export const SIGNUP_URL = 'https://www.prometiam.com/signup?utm_source=mcp&utm_medium=demo'
+export const DEMO_NOTE =
+  'Running on the shared demo key (2,000 calls a day for everyone). For your own 1,000 free calls a month, '
+  + 'no card: get a key at ' + SIGNUP_URL + ' and set PROMETIAM_API_KEY.'
 
 export class RiskApiError extends Error {
   readonly status: number
@@ -30,17 +38,16 @@ export interface RiskApiClientOptions {
 
 export class RiskApiClient {
   private readonly apiKey: string
+  /** True when no key was configured and the shared demo key is in use. */
+  readonly isDemo: boolean
   private readonly baseUrl: string
   private readonly timeoutMs: number
   private readonly userAgent: string
 
   constructor(opts: RiskApiClientOptions = {}) {
-    const apiKey = opts.apiKey ?? process.env.PROMETIAM_API_KEY ?? ''
-    if (!apiKey) {
-      throw new Error(
-        'Missing API key. Set PROMETIAM_API_KEY in your environment or pass apiKey to RiskApiClient. Get a free key at https://www.prometiam.com/signup',
-      )
-    }
+    const apiKey = opts.apiKey ?? process.env.PROMETIAM_API_KEY ?? DEMO_KEY
+    this.isDemo = apiKey === DEMO_KEY
+    if (this.isDemo) console.error('[prometiam-risk-mcp] ' + DEMO_NOTE)
     if (!apiKey.startsWith('rk_live_') && !apiKey.startsWith('rk_test_')) {
       throw new Error('Invalid API key format. Prometiam keys start with rk_live_ or rk_test_.')
     }
@@ -48,7 +55,7 @@ export class RiskApiClient {
     this.baseUrl = (opts.baseUrl ?? process.env.PROMETIAM_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/+$/, '')
     this.timeoutMs = opts.timeoutMs ?? 15000
     // Keep in step with package.json and the serverInfo.version in index.ts.
-    this.userAgent = opts.userAgent ?? `prometiam-risk-mcp/0.2.6 (+https://www.prometiam.com)`
+    this.userAgent = opts.userAgent ?? `prometiam-risk-mcp/0.4.0 (+https://www.prometiam.com)`
   }
 
   /**
@@ -125,6 +132,15 @@ export class RiskApiClient {
       const message = errBody?.error?.message ?? `HTTP ${response.status} ${response.statusText}`
       const retryAfterHeader = response.headers.get('Retry-After')
       const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : undefined
+      if (this.isDemo && (response.status === 429 || response.status === 401)) {
+        throw new RiskApiError(
+          (response.status === 429
+            ? 'The shared demo key has used its quota for now (2,000 calls a day for everyone). '
+            : 'The shared demo key was rotated. ')
+            + 'Get your own free key, 1,000 calls a month and no card, at ' + SIGNUP_URL
+            + ' and set PROMETIAM_API_KEY.',
+          response.status, code, retryAfter)
+      }
       throw new RiskApiError(message, response.status, code, retryAfter)
     }
 

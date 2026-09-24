@@ -1,6 +1,6 @@
 # `prometiam-risk-mcp`
 
-> Model Context Protocol server for the **Prometiam company data API** — official company-registry data for Spain, France, the UK, Ireland, Poland and Norway, plus directors, corporate events, insolvency, VAT/LEI lookup and sanctions screening, as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
+> Model Context Protocol server for the **Prometiam company data API** — official company-registry data for Spain, France, the UK, Ireland, Poland and Norway, plus directors, corporate events, insolvency, VAT/LEI lookup, sanctions screening, Spanish public-procurement awards and public-buyer risk scores, as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
 
 [![npm version](https://img.shields.io/npm/v/prometiam-risk-mcp.svg)](https://www.npmjs.com/package/prometiam-risk-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -8,7 +8,7 @@
 
 ## What you get
 
-30 MCP tools that wrap the [Prometiam Risk API](https://www.prometiam.com/risk-api/docs):
+35 MCP tools that wrap the [Prometiam Risk API](https://www.prometiam.com/risk-api/docs):
 
 | Tool | Description |
 |---|---|
@@ -24,12 +24,17 @@
 | `sanctions_entity` | Full detail for one sanctions entity by ID — aliases, programme, listing date. |
 | `sanctions_changes` | Additions, removals and amendments detected on the sanctions lists, newest first — answer "what changed" without re-screening a whole book of business. |
 | `sanctions_watchlist` | Your sanctions watchlists and any recent hits against them. Read-only; requires the `sanctions_watch` scope. |
+| `sanctions_watch` | Add a name to your sanctions watchlist: re-screened on every list update, with an optional webhook. Requires the `sanctions_watch` scope. **Mutating.** |
+| `sanctions_unwatch` | Remove one of your watchlist entries by id. **Mutating.** |
 | `vat_validate` | Validate an EU VAT number against VIES (27 EU states + XI) — returns registered name/address when valid. |
 | `lei_lookup` | Look up a Legal Entity Identifier in the GLEIF global register — legal name, jurisdiction, status, address. |
 | `lei_search` | Resolve a company name to candidate LEIs (GLEIF full-text search). |
 | `lei_relationships` | GLEIF Level-2 ownership: direct and ultimate parents/children of an LEI. |
 | `insolvency_search` | Search insolvency / risk notices (bankruptcies, liquidations, judgments). |
-| `insolvency_notices_search` | Corporate insolvency notices from official gazettes in FR, DE, GB, AT, CH, NO, FI, US — distress coverage in markets with no registry held. Corporate only; personal insolvency is never returned. |
+| `insolvency_notices_search` | Corporate insolvency notices from official gazettes in FR, DE, GB, AT, CH, NO, FI, US, NL — distress coverage in markets with no registry held. Corporate only; personal insolvency is never returned. |
+| `companies_lookup` | Resolve up to 100 companies in one call by registry number, NIF, SIREN, VAT or name (best fuzzy match with match_score). Every item counts as one request; an over-quota batch is refused up front with `max_items_now`. |
+| `sanctions_screen_batch` | Screen up to 50 names in one call (sanctions scope). Per-item status match / clear / error / timeout with the same hits as `sanctions_screen`. |
+| `insolvency_check` | Check up to 100 counterparties for corporate insolvency notices in one call across FR, DE, GB, AT, CH, NO, FI, US, NL; up to 5 notices per item plus latest_filing_date. |
 | `insolvency_record` | A single insolvency / risk notice by ID, with related events. |
 | `notice_detail` | Registry gazette PDF metadata: edition, parse status, hash, raw text. |
 | `coverage` | Dataset coverage stats per country (companies, events, freshness). |
@@ -38,10 +43,10 @@
 | `monitor_get` | One monitored company by ID, with its alert history. |
 | `monitor_subscribe` | Subscribe a company to daily monitoring (events/status/sanctions → signed webhook). ES, IE and PL only. **Mutating.** |
 | `monitor_stop` | Stop monitoring a company and delete the subscription. **Mutating.** |
-| `prospect_companies_search` | Search companies by firmographics — sector group, NACE code, company age, employee band — for ICP / prospect-list building. |
-| `prospect_people_search` | Find contactable decision-makers (officers ES/FR, PSC owners GB) by seniority, department, and contact-route availability. Compliance-safe. |
-| `prospect_company_contacts` | Compliance-safe contact routes (role/company emails, phone, website, LinkedIn) published by the organisation. Suppression-filtered. |
-| `prospect_suppress` | Add an email/domain/LinkedIn/phone/person/company to the prospecting opt-out list (GDPR). **Mutating.** |
+| `procurement_awards` | Public-contract awards from Spain, France, the UK, Ireland, Poland and Norway by supplier, buyer, identifier, CPV code or date, one row per award to one supplier, linked to the supplier's registry record where the identifier resolves (ES, FR, GB). Ireland, Poland and Norway above the EU thresholds only. |
+| `procurement_buyer` | Risk profile of a public buyer (the contracting body) in Spain or France — **beta**. Two calibrated scores: single-bid risk and supplier-insolvency exposure, each with a 1-10 score, a probability and the evidence awards. Never a supplier score. |
+| `procurement_buyers` | List scored public buyers by either score — a portfolio screen, a region view, or a name lookup to find a buyer's id. Beta, ES + FR. |
+| `procurement_relationship` | How dependent a public buyer and one of its five largest suppliers are on each other: awards, value, share, single-bid count, insolvency date. Beta, ES + FR. |
 
 Source: Spain (BORME), France (BODACC), United Kingdom (Companies House), Ireland (CRO), Poland (KRS), Norway (Brønnøysundregistrene / Enhetsregisteret, NLOD) — 26M+ companies. Daily updates. EU data residency.
 
@@ -57,9 +62,9 @@ npm install -g prometiam-risk-mcp   # global install for the bin
 
 ## Configure
 
-You need a Prometiam API key. **Free tier: 1,000 calls/month, no credit card.** Sign up at <https://www.prometiam.com/signup>.
+**It works without any key.** The server ships with a shared demo key — 30 requests a minute and 2,000 a day for everyone using it — so the first tool call answers right after `npx`. When the shared quota is used up the error tells you how to continue.
 
-Set it as an environment variable:
+For your own quota — **free tier: 1,000 calls/month, no credit card** — sign up at <https://www.prometiam.com/signup?utm_source=mcp> and set the key as an environment variable:
 
 ```bash
 export PROMETIAM_API_KEY="rk_live_..."
@@ -83,7 +88,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
 }
 ```
 
-Restart Claude Desktop. The 30 tools appear in the tool list. Try:
+Restart Claude Desktop. The 35 tools appear in the tool list. Try:
 
 > "What's the Prometiam coverage today?"
 > "Search for companies named Mercadona in Spain."
@@ -137,7 +142,7 @@ Anything that speaks MCP over stdio works. Run the binary with `PROMETIAM_API_KE
 
 | Variable | Required | Default |
 |---|---|---|
-| `PROMETIAM_API_KEY` | **Yes** | — |
+| `PROMETIAM_API_KEY` | No — the shared demo key is used without it | — |
 | `PROMETIAM_BASE_URL` | No | `https://api.prometiam.com/functions/v1/risk-api` |
 
 ## Smoke test
@@ -148,7 +153,7 @@ Once installed and configured, you can verify the server lists tools without spi
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | PROMETIAM_API_KEY=rk_live_... npx -y prometiam-risk-mcp
 ```
 
-You should see a JSON-RPC response with all 30 tools and their schemas.
+You should see a JSON-RPC response with all 29 tools and their schemas.
 
 ## Rate limits & pricing
 
@@ -167,7 +172,7 @@ Per Prometiam tier (returned in every response's `meta.rate_limit`):
 - All requests hit the Prometiam Risk API in **EU** (AWS eu-central-1, Frankfurt).
 - The MCP server adds **no telemetry of its own** — it just forwards requests to the API.
 - Officer data is processed under GDPR Article 6(1)(c) (legal obligation of public registries) and 6(1)(f) (legitimate interest in fraud prevention).
-- Mostly read-only. The only mutating tools are `monitor_subscribe` and `monitor_stop` (create/delete a monitoring subscription tied to your key) and `prospect_suppress` (adds a GDPR opt-out); every other tool is read-only.
+- Mostly read-only. The only mutating tools are `monitor_subscribe` and `monitor_stop` (create/delete a monitoring subscription tied to your key); every other tool is read-only.
 
 ## Source
 

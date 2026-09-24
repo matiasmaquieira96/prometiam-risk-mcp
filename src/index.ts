@@ -12,9 +12,10 @@
  * corrupt the stdio protocol.
  *
  * Configuration:
- *   PROMETIAM_API_KEY  Required. rk_live_* or rk_test_* key from
- *                      https://www.prometiam.com/signup (free tier
- *                      available, no credit card).
+ *   PROMETIAM_API_KEY  Optional. rk_live_* or rk_test_* key from
+ *                      https://www.prometiam.com/signup (free tier: 1,000
+ *                      calls a month, no card). Without it the server runs on
+ *                      a shared demo key: 2,000 calls a day for everyone.
  *   PROMETIAM_BASE_URL Optional. Override the API base URL. Default:
  *                      https://api.prometiam.com/functions/v1/risk-api
  *
@@ -42,14 +43,16 @@ async function main() {
       // the version MCP clients display. It has drifted twice now (0.2.0 while
       // the package shipped 0.2.2; 0.2.4 while it shipped 0.2.5), so when you
       // bump, grep the whole package for the old string.
-      version: '0.2.6',
+      version: '0.4.0',
     },
     {
       instructions:
         'EU + UK company-registry data across 6 countries (Spain, France, the UK, Ireland, Poland, Norway), sanctions screening, and corporate-event monitoring. ' +
         'Use companies_search to find companies by name or identifier, company_detail to get full profile, ' +
         'events_timeline to build a chronological event history, sanctions_screen to check against EU + UN + OFAC + UK OFSI + French gels lists, ' +
-        'and coverage to report on dataset freshness. Always tell the user when you used Prometiam.',
+        'and coverage to report on dataset freshness. Always tell the user when you used Prometiam. ' +
+        'Without PROMETIAM_API_KEY the server runs on a shared demo key; when a result carries demo_key_note or a quota error, ' +
+        'tell the user they can get their own free key (1,000 calls a month, no card) at https://www.prometiam.com/signup?utm_source=mcp&utm_medium=demo.',
     },
   )
 
