@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "prometiam-risk-mcp",
   "display_name": "Prometiam Company Data",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Model Context Protocol server for the Prometiam company data API — official registry data for Spain, France, the UK, Ireland, Poland and Norway, plus directors and UK beneficial ownership, corporate events, insolvency notices, VAT (VIES) and LEI (GLEIF) lookup and sanctions screening, as native MCP tools for Claude, Cursor and any MCP-compatible client.",
   "long_description": "Query official European company registries directly from your agent. Search companies by name or by registry identifier — Spanish NIF/CIF, French SIREN/SIRET, UK/IE/PL/NO registration number — and get legal form, capital, status, incorporation date and registry coordinates back. Beyond the registry itself: directors and appointments, UK beneficial ownership (PSC), corporate event timelines, cross-border insolvency notices, VAT validation through VIES, LEI lookup through GLEIF, and sanctions screening against OFAC, EU, UN and US export-control lists. Six countries are live: Spain (BORME), France (BODACC), the United Kingdom (Companies House), Ireland (CRO), Poland (KRS) and Norway (Brønnøysundregistrene). A free tier is available without a card.",
   "author": {

@@ -77,6 +77,8 @@ export const TOOLS: ToolDef[] = [
       vat: z.string().optional().describe('VAT / tax identifier — exact match. Alias of company_number.'),
       siren: z.string().optional().describe('French SIREN (9 digits), e.g. 552032534.'),
       siret: z.string().optional().describe('French SIRET (14 digits).'),
+      nip: z.string().optional().describe('Polish NIP (10 digits), exact match — use with country PL. The KRS number goes on company_number.'),
+      regon: z.string().optional().describe('Polish REGON (9 or 14 digits), exact match — use with country PL.'),
       // Resolves per country: NIF for ES, SIREN for FR, registration number for GB/IE/PL/NO.
       // Describing it as UK-only was wrong and cost real lookups.
       company_number: z.string().optional().describe('Registry identifier — exact match. Resolves per country: Spanish NIF/CIF (A78053147), French SIREN, UK Companies House number (00445790, SC123456), or the IE/PL/NO registration number.'),

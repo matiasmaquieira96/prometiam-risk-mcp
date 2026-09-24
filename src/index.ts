@@ -43,7 +43,7 @@ async function main() {
       // the version MCP clients display. It has drifted twice now (0.2.0 while
       // the package shipped 0.2.2; 0.2.4 while it shipped 0.2.5), so when you
       // bump, grep the whole package for the old string.
-      version: '0.4.0',
+      version: '0.4.1',
     },
     {
       instructions:
