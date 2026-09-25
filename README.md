@@ -176,7 +176,7 @@ Per Prometiam tier (returned in every response's `meta.rate_limit`):
 
 ## Source
 
-This package is open source under the MIT license. The Risk API itself is a commercial service — see <https://www.prometiam.com> for terms.
+This package is open source under the MIT license. The Risk API itself is a commercial service — see <https://www.prometiam.com/mcp> for the install page, or <https://www.prometiam.com> for terms.
 
 - API documentation: <https://www.prometiam.com/risk-api/docs>
 - OpenAPI 3.0 spec: <https://www.prometiam.com/openapi.json>
