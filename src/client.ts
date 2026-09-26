@@ -12,8 +12,8 @@ const DEFAULT_BASE_URL = 'https://api.prometiam.com/functions/v1/risk-api'
 export const DEMO_KEY = 'rk_live_mcpdemo_64f4c7338872fe6dfd8aa3db'
 export const SIGNUP_URL = 'https://www.prometiam.com/signup?utm_source=mcp&utm_medium=demo'
 export const DEMO_NOTE =
-  'Running on the shared demo key (2,000 calls a day for everyone). For your own 1,000 free calls a month, '
-  + 'no card: get a key at ' + SIGNUP_URL + ' and set PROMETIAM_API_KEY.'
+  'Running on the shared demo key (2,000 calls a day for everyone). For your own key (free 14-day trial, 1,000 calls a month, '
+  + 'no card): get a key at ' + SIGNUP_URL + ' and set PROMETIAM_API_KEY.'
 
 export class RiskApiError extends Error {
   readonly status: number
@@ -55,7 +55,7 @@ export class RiskApiClient {
     this.baseUrl = (opts.baseUrl ?? process.env.PROMETIAM_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/+$/, '')
     this.timeoutMs = opts.timeoutMs ?? 15000
     // Keep in step with package.json and the serverInfo.version in index.ts.
-    this.userAgent = opts.userAgent ?? `prometiam-risk-mcp/0.4.1 (+https://www.prometiam.com)`
+    this.userAgent = opts.userAgent ?? `prometiam-risk-mcp/0.4.3 (+https://www.prometiam.com)`
   }
 
   /**
@@ -74,13 +74,16 @@ export class RiskApiClient {
     return this.request('GET', url)
   }
 
-  /** POST request with a JSON body (used by monitor subscribe). */
-  async post(path: string, body: Record<string, unknown> = {}): Promise<unknown> {
+  /**
+   * POST request with a JSON body (used by monitor subscribe and the three batch tools).
+   * `extraHeaders` carries Idempotency-Key on the batch endpoints — never part of the body.
+   */
+  async post(path: string, body: Record<string, unknown> = {}, extraHeaders?: Record<string, string>): Promise<unknown> {
     const url = new URL(this.baseUrl + (path.startsWith('/') ? path : '/' + path))
     // Strip undefined so we don't send explicit nulls the API doesn't expect.
     const clean: Record<string, unknown> = {}
     for (const [k, v] of Object.entries(body)) if (v !== undefined && v !== null) clean[k] = v
-    return this.request('POST', url, JSON.stringify(clean))
+    return this.request('POST', url, JSON.stringify(clean), extraHeaders)
   }
 
   /** DELETE request (used by monitor stop). */
@@ -90,7 +93,7 @@ export class RiskApiClient {
   }
 
   /** Shared request pipeline for GET/POST/DELETE. */
-  private async request(method: string, url: URL, jsonBody?: string): Promise<unknown> {
+  private async request(method: string, url: URL, jsonBody?: string, extraHeaders?: Record<string, string>): Promise<unknown> {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), this.timeoutMs)
     let response: Response
@@ -102,6 +105,7 @@ export class RiskApiClient {
           Accept: 'application/json',
           'User-Agent': this.userAgent,
           ...(jsonBody ? { 'Content-Type': 'application/json' } : {}),
+          ...(extraHeaders || {}),
         },
         body: jsonBody,
         signal: controller.signal,
@@ -137,7 +141,7 @@ export class RiskApiClient {
           (response.status === 429
             ? 'The shared demo key has used its quota for now (2,000 calls a day for everyone). '
             : 'The shared demo key was rotated. ')
-            + 'Get your own free key, 1,000 calls a month and no card, at ' + SIGNUP_URL
+            + 'Get your own key (free 14-day trial, 1,000 calls a month, no card) at ' + SIGNUP_URL
             + ' and set PROMETIAM_API_KEY.',
           response.status, code, retryAfter)
       }

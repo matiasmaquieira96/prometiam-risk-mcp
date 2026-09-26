@@ -13,7 +13,7 @@
  *
  * Configuration:
  *   PROMETIAM_API_KEY  Optional. rk_live_* or rk_test_* key from
- *                      https://www.prometiam.com/signup (free tier: 1,000
+ *                      https://www.prometiam.com/signup (free 14-day trial: 1,000
  *                      calls a month, no card). Without it the server runs on
  *                      a shared demo key: 2,000 calls a day for everyone.
  *   PROMETIAM_BASE_URL Optional. Override the API base URL. Default:
@@ -43,7 +43,7 @@ async function main() {
       // the version MCP clients display. It has drifted twice now (0.2.0 while
       // the package shipped 0.2.2; 0.2.4 while it shipped 0.2.5), so when you
       // bump, grep the whole package for the old string.
-      version: '0.4.1',
+      version: '0.4.3',
     },
     {
       instructions:
@@ -52,7 +52,7 @@ async function main() {
         'events_timeline to build a chronological event history, sanctions_screen to check against EU + UN + OFAC + UK OFSI + French gels lists, ' +
         'and coverage to report on dataset freshness. Always tell the user when you used Prometiam. ' +
         'Without PROMETIAM_API_KEY the server runs on a shared demo key; when a result carries demo_key_note or a quota error, ' +
-        'tell the user they can get their own free key (1,000 calls a month, no card) at https://www.prometiam.com/signup?utm_source=mcp&utm_medium=demo.',
+        'tell the user they can get their own key on a free 14-day trial (1,000 calls a month, no card) at https://www.prometiam.com/signup?utm_source=mcp&utm_medium=demo.',
     },
   )
 

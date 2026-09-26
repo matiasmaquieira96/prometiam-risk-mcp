@@ -33,6 +33,12 @@ export interface ToolDef {
   handler: (args: Record<string, unknown>) => Promise<unknown>
 }
 
+/** Idempotency-Key rides as a header, never as a body field — strip it from `args` at each
+ *  batch tool's handler and pass it through here. */
+function idempotencyHeader(key: unknown): Record<string, string> | undefined {
+  return typeof key === 'string' && key.length > 0 ? { 'Idempotency-Key': key } : undefined
+}
+
 let demoNoteShown = false
 
 /** Convert any thrown RiskApiError into a clean text response for the MCP client. On the shared
@@ -309,7 +315,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'companies_lookup',
-    description: 'Resolve up to 100 companies in ONE call (POST /companies/lookup). Each item needs country plus an identifier (company_number; aliases nif, siren, vat) or a name (best fuzzy match with match_score). Results come back in request order with status found / not_found / error / timeout and the same company object companies_search returns. Every item counts as one request against the plan limits; a batch that does not fit is refused with 429 batch_exceeds_quota and max_items_now.',
+    description: 'Resolve up to 100 companies in ONE call (POST /companies/lookup). Each item needs country plus an identifier (company_number; aliases nif, siren, vat) or a name (best fuzzy match with match_score). Results come back in request order with status found / not_found / error / timeout and the same company object companies_search returns. Every item counts as one request against the plan limits; a batch that does not fit is refused with 429 batch_exceeds_quota and max_items_now. Optional idempotency_key: replaying the same key with the same items within 24h returns the original response for free (409 if still running, 422 if the items differ).',
     schema: z.object({
       items: z.array(z.object({
         country: Country.optional(),
@@ -319,12 +325,13 @@ export const TOOLS: ToolDef[] = [
         vat: z.string().optional(),
         name: z.string().optional().describe('Company name for a fuzzy lookup (best match only).'),
       })).min(1).max(100).describe('Up to 100 companies to resolve.'),
+      idempotency_key: z.string().min(1).max(255).optional().describe('Optional. Safe-replay key for this exact batch (1-255 printable ASCII); a repeat within 24h is free and returns the stored result.'),
     }),
-    handler: (args) => safeCall(() => getClient().post('/companies/lookup', args)),
+    handler: ({ idempotency_key, ...body }) => safeCall(() => getClient().post('/companies/lookup', body, idempotencyHeader(idempotency_key))),
   },
   {
     name: 'sanctions_screen_batch',
-    description: 'Screen up to 50 names against the sanctions lists in ONE call (POST /sanctions/screen). Requires the sanctions scope (batch calls do not use the free trial allowance); every item counts as one request. Per-item status: match / clear / error / timeout. "clear" means no hit at or above the threshold on the active lists, not a certification.',
+    description: 'Screen up to 50 names against the sanctions lists in ONE call (POST /sanctions/screen). Requires the sanctions scope (batch calls do not use the free trial allowance); every item counts as one request. Per-item status: match / clear / error / timeout. "clear" means no hit at or above the threshold on the active lists, not a certification. Optional idempotency_key: replaying the same key with the same items within 24h returns the original response for free (409 if still running, 422 if the items differ).',
     schema: z.object({
       names: z.array(z.string().min(2)).min(1).max(50).describe('Names to screen (people, companies, vessels).'),
       threshold: z.number().int().min(30).max(100).optional().describe('Minimum similarity 30-100 (default 80).'),
@@ -332,12 +339,13 @@ export const TOOLS: ToolDef[] = [
       list: z.string().optional().describe('Comma-separated source lists to restrict to, e.g. OFAC,EU,UN.'),
       active_only: z.boolean().optional().describe('Only currently listed entries (default true).'),
       limit: z.number().int().min(1).max(100).optional().describe('Hits returned per name (default 10).'),
+      idempotency_key: z.string().min(1).max(255).optional().describe('Optional. Safe-replay key for this exact batch (1-255 printable ASCII); a repeat within 24h is free and returns the stored result.'),
     }),
-    handler: (args) => safeCall(() => getClient().post('/sanctions/screen', args)),
+    handler: ({ idempotency_key, ...body }) => safeCall(() => getClient().post('/sanctions/screen', body, idempotencyHeader(idempotency_key))),
   },
   {
     name: 'insolvency_check',
-    description: 'Check up to 100 counterparties for CORPORATE insolvency notices in ONE call (POST /insolvency/check) across FR, DE, GB, AT, CH, NO, FI, US and NL. Each item: country plus company_number (alias siren; exact, as printed on the notice) or name. Returns up to 5 notices per item, newest first, plus latest_filing_date; status found / none / error / timeout. "none" is not proof of solvency. Every item counts as one request.',
+    description: 'Check up to 100 counterparties for CORPORATE insolvency notices in ONE call (POST /insolvency/check) across FR, DE, GB, AT, CH, NO, FI, US and NL. Each item: country plus company_number (alias siren; exact, as printed on the notice) or name. Returns up to 5 notices per item, newest first, plus latest_filing_date; status found / none / error / timeout. "none" is not proof of solvency. Every item counts as one request. Optional idempotency_key: replaying the same key with the same items within 24h returns the original response for free (409 if still running, 422 if the items differ).',
     schema: z.object({
       items: z.array(z.object({
         country: z.enum(['FR', 'DE', 'GB', 'AT', 'CH', 'NO', 'FI', 'US', 'NL']).optional(),
@@ -345,8 +353,9 @@ export const TOOLS: ToolDef[] = [
         siren: z.string().optional(),
         name: z.string().optional().describe('Company name (normalised pattern match).'),
       })).min(1).max(100).describe('Up to 100 counterparties to check.'),
+      idempotency_key: z.string().min(1).max(255).optional().describe('Optional. Safe-replay key for this exact batch (1-255 printable ASCII); a repeat within 24h is free and returns the stored result.'),
     }),
-    handler: (args) => safeCall(() => getClient().post('/insolvency/check', args)),
+    handler: ({ idempotency_key, ...body }) => safeCall(() => getClient().post('/insolvency/check', body, idempotencyHeader(idempotency_key))),
   },
   {
     name: 'insolvency_record',

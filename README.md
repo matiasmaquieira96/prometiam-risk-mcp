@@ -64,7 +64,7 @@ npm install -g prometiam-risk-mcp   # global install for the bin
 
 **It works without any key.** The server ships with a shared demo key — 30 requests a minute and 2,000 a day for everyone using it — so the first tool call answers right after `npx`. When the shared quota is used up the error tells you how to continue.
 
-For your own quota — **free tier: 1,000 calls/month, no credit card** — sign up at <https://www.prometiam.com/signup?utm_source=mcp> and set the key as an environment variable:
+For your own quota — **free 14-day trial: 1,000 calls/month, no credit card** — sign up at <https://www.prometiam.com/signup?utm_source=mcp> and set the key as an environment variable:
 
 ```bash
 export PROMETIAM_API_KEY="rk_live_..."
