@@ -71,7 +71,7 @@ export const TOOLS: ToolDef[] = [
   // ── Companies ────────────────────────────────────────────────────────────
   {
     name: 'companies_search',
-    description: 'Search EU + UK companies in official registries by name or identifier. Returns companies with legal form, capital, status, registry coordinates. Use country to scope the search to Spain (BORME), France (BODACC), the UK (Companies House), Ireland (CRO), Poland (KRS), or Norway (Brønnøysundregistrene). Fuzzy name results carry a match_score (0–100) and are ranked by relevance, best first.',
+    description: 'Search EU + UK companies in official registries by name or identifier. Returns companies with legal form, capital, status, registry coordinates, plus a cross-country status_canonical/stage and legal_form_canonical/abbreviation/family next to each register\'s own status/legal_form (null when the dictionary does not recognise the stored value — never a guess). Use country to scope the search to Spain (BORME), France (BODACC), the UK (Companies House), Ireland (CRO), Poland (KRS), or Norway (Brønnøysundregistrene). Fuzzy name results carry a match_score (0–100) and are ranked by relevance, best first. NOTE: "dissolved" means different things by country — ES/FR still exists pending liquidation, GB/IE/PL/NO no longer exists — read status_canonical, not status, to compare across countries.',
     schema: z.object({
       name: z.string().optional().describe('Company name — fuzzy normalized match.'),
       // 'nif' was removed here because handleCompaniesSearch did not read it. It does now
@@ -89,7 +89,13 @@ export const TOOLS: ToolDef[] = [
       // Describing it as UK-only was wrong and cost real lookups.
       company_number: z.string().optional().describe('Registry identifier — exact match. Resolves per country: Spanish NIF/CIF (A78053147), French SIREN, UK Companies House number (00445790, SC123456), or the IE/PL/NO registration number.'),
       has_risk_flag: z.boolean().optional().describe('Spain only. Return only companies carrying a published risk flag (currently the AEAT >€600,000 tax-debtor list).'),
-      risk_flag_type: z.enum(['tax_debt', 'debarment', 'regulator_sanction', 'subsidy']).optional().describe('Spain only. Restrict to one flag type.'),
+      risk_flag_type: z.enum(['tax_debt', 'debarment', 'regulator_sanction', 'subsidy', 'registry_compliance']).optional().describe('Restrict to one flag type. registry_compliance also works for GB, IE and NO.'),
+      status_canonical: z.enum([
+        'active', 'active_strike_off_pending', 'suspended', 'not_yet_active',
+        'in_restructuring', 'in_administration', 'in_receivership', 'insolvent',
+        'in_liquidation_insolvent', 'in_liquidation', 'in_compulsory_liquidation',
+        'in_dissolution', 'deregistered', 'merged', 'withheld',
+      ]).optional().describe('Filter by the cross-country canonical status rather than each country\'s own vocabulary. Works for all six countries, but outside ES it must be combined with a name/company_number/siren/siret/nip/regon.'),
       country: Country.optional(),
       limit: Limit,
       cursor: Cursor,
@@ -98,7 +104,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'company_detail',
-    description: 'Fetch a single company by Prometiam internal ID. Returns full profile including officers, registry coordinates, founding date, capital, and current status. Get an ID from companies_search first. Pass include to attach extra blocks — notably risk_flags (published tax-debt / debarment signals) and insolvency.',
+    description: 'Fetch a single company by Prometiam internal ID. Returns full profile including officers, registry coordinates, founding date, capital, current status (with status_canonical/stage) and legal form (with legal_form_canonical/abbreviation/family). recent_events (ES/FR/GB) carries the same served event_type + raw act_type as events_search. Get an ID from companies_search first. Pass include to attach extra blocks — notably risk_flags (published tax-debt / debarment signals) and insolvency.',
     schema: z.object({
       id: z.union([z.number().int(), z.string()]).describe('Prometiam internal company ID (integer).'),
       country: Country.optional(),
@@ -113,11 +119,11 @@ export const TOOLS: ToolDef[] = [
   // ── Corporate events ─────────────────────────────────────────────────────
   {
     name: 'events_search',
-    description: 'Search normalized corporate-event records (capital changes, director changes, dissolutions, mergers, insolvency, name changes, etc.) by company or date range. Returns events with type, date, before/after values, and source notice URL.',
+    description: 'Search normalized corporate-event records (capital changes, director changes, dissolutions, mergers, insolvency, name changes, etc.) by company or date range, for Spain, France and the UK. Returns events with a served event_type matching this enum for all three countries (each row also carries act_type, the raw BORME/BODACC/Companies House code it was derived from, or null when not yet covered), event date, before/after values, and source notice URL. Norway publishes no corporate-event gazette; Ireland and Poland are company-level only (no event stream) — those three return an empty list.',
     schema: z.object({
       company_name: z.string().optional().describe('Company name — fuzzy match.'),
       company_number: z.string().optional().describe('Registry registration number — exact match.'),
-      event_type: z.enum(['dissolution', 'director_change', 'capital_change', 'new_incorporation', 'name_change', 'address_change', 'liquidation', 'merger', 'demerger', 'status_change', 'insolvency']).optional(),
+      event_type: z.string().optional().describe('One of dissolution, director_change, capital_change, new_incorporation, name_change, address_change, liquidation, merger, demerger, status_change, insolvency — or a raw register code kept as an alias (e.g. GB\'s OFFICER_CHANGE).'),
       date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Filter events on or after this date (YYYY-MM-DD).'),
       date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Filter events on or before this date (YYYY-MM-DD).'),
       country: Country.optional(),
