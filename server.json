@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.matiasmaquieira96/risk-mcp",
   "title": "Prometiam Company Data",
-  "description": "Company data for Spain, France, the UK, Ireland, Poland and Norway — registry, KYB and sanctions.",
-  "version": "0.4.4",
+  "description": "Company data for Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium and Denmark — registry, KYB and sanctions.",
+  "version": "0.4.10",
   "websiteUrl": "https://www.prometiam.com/risk-api",
   "repository": {
     "url": "https://github.com/matiasmaquieira96/prometiam-risk-mcp",
@@ -13,14 +13,14 @@
     {
       "registryType": "npm",
       "identifier": "prometiam-risk-mcp",
-      "version": "0.4.4",
+      "version": "0.4.10",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
           "name": "PROMETIAM_API_KEY",
-          "description": "Prometiam API key (rk_live_* or rk_test_*). Optional: without it the server runs on a shared demo key (2,000 calls a day for everyone). Your own key, on a free 14-day trial with 1,000 calls a month and no card: https://www.prometiam.com/signup?utm_source=mcp",
+          "description": "Prometiam API key (rk_live_* or rk_test_*). Optional: without it the server runs on a shared demo key (2,000 calls a day for everyone). Your own key, on a free 14-day trial with 1,000 calls and no card: https://www.prometiam.com/signup?utm_source=mcp",
           "isRequired": false,
           "isSecret": true
         },

@@ -1,6 +1,6 @@
 # `prometiam-risk-mcp`
 
-> Model Context Protocol server for the **Prometiam company data API** — official company-registry data for Spain, France, the UK, Ireland, Poland and Norway, plus directors, corporate events, insolvency, VAT/LEI lookup, sanctions screening, Spanish public-procurement awards and public-buyer risk scores, as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
+> Model Context Protocol server for the **Prometiam company data API** — official company-registry data for Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium and Denmark, plus directors, corporate events, insolvency, VAT/LEI lookup, sanctions screening, Spanish public-procurement awards and public-buyer risk scores, as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
 
 [![npm version](https://img.shields.io/npm/v/prometiam-risk-mcp.svg)](https://www.npmjs.com/package/prometiam-risk-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -12,10 +12,10 @@
 
 | Tool | Description |
 |---|---|
-| `companies_search` | Search EU + UK companies by name, NIF (ES), SIREN/SIRET (FR), company_number (UK), or organisation number (NO). |
+| `companies_search` | Search EU + UK companies by name, NIF (ES), SIREN/SIRET (FR), company_number (UK), organisation number (NO), Y-tunnus (FI), organisationsnummer (SE), MBS/OIB (HR), enterprise number (BE), or CVR number (DK). |
 | `company_detail` | Full company profile by Prometiam ID — officers, registry coordinates, capital, status. `include=risk_flags` attaches published tax-debt / debarment signals (ES). |
-| `events_search` | Search normalized corporate events: capital changes, director changes, dissolutions, mergers, insolvency. |
-| `events_timeline` | Chronological event history for one company (oldest first). |
+| `events_search` | Search normalized corporate events: capital changes, director changes, dissolutions, mergers, insolvency (ES, FR, GB from their gazettes; register-change events for FI, SE, BE, HR, DK; none for IE, PL, NO). |
+| `events_timeline` | Event history for one company, newest first. |
 | `event_detail` | A single corporate-event record by ID, with before/after values and source notice. |
 | `people_search` | Search officers / directors / shareholders by name across registries. |
 | `person_detail` | Officer / director profile with full appointment history across companies. |
@@ -31,26 +31,26 @@
 | `lei_search` | Resolve a company name to candidate LEIs (GLEIF full-text search). |
 | `lei_relationships` | GLEIF Level-2 ownership: direct and ultimate parents/children of an LEI. |
 | `insolvency_search` | Search insolvency / risk notices (bankruptcies, liquidations, judgments). |
-| `insolvency_notices_search` | Corporate insolvency notices from official gazettes in FR, DE, GB, AT, CH, NO, FI, US, NL — distress coverage in markets with no registry held. Corporate only; personal insolvency is never returned. |
+| `insolvency_notices_search` | Corporate insolvency notices from official gazettes in FR, DE, GB, AT, CH, NO, FI, US, NL, DK, HR, SE — distress coverage in markets with no registry held. Corporate only; personal insolvency is never returned. |
 | `companies_lookup` | Resolve up to 100 companies in one call by registry number, NIF, SIREN, VAT or name (best fuzzy match with match_score). Every item counts as one request; an over-quota batch is refused up front with `max_items_now`. |
 | `sanctions_screen_batch` | Screen up to 50 names in one call (sanctions scope). Per-item status match / clear / error / timeout with the same hits as `sanctions_screen`. |
-| `insolvency_check` | Check up to 100 counterparties for corporate insolvency notices in one call across FR, DE, GB, AT, CH, NO, FI, US, NL; up to 5 notices per item plus latest_filing_date. |
+| `insolvency_check` | Check up to 100 counterparties for corporate insolvency notices in one call across FR, DE, GB, AT, CH, NO, FI, US, NL, DK, HR, SE; up to 5 notices per item plus latest_filing_date. |
 | `insolvency_record` | A single insolvency / risk notice by ID, with related events. |
 | `notice_detail` | Registry gazette PDF metadata: edition, parse status, hash, raw text. |
 | `coverage` | Dataset coverage stats per country (companies, events, freshness). |
 | `account` | Calling key's plan, rate limits, remaining quota, and scopes. |
 | `monitor_list` | List companies subscribed to ongoing monitoring for this key. |
 | `monitor_get` | One monitored company by ID, with its alert history. |
-| `monitor_subscribe` | Subscribe a company to daily monitoring (events/status/sanctions → signed webhook). ES, IE and PL only. **Mutating.** |
+| `monitor_subscribe` | Subscribe a company to daily monitoring (status, dissolution, sanctions and, for ES and FI/SE/BE/HR/DK, corporate events → signed webhook). ES, IE, PL, FI, SE, BE, HR and DK only. **Mutating.** |
 | `monitor_stop` | Stop monitoring a company and delete the subscription. **Mutating.** |
 | `procurement_awards` | Public-contract awards from Spain, France, the UK, Ireland, Poland and Norway by supplier, buyer, identifier, CPV code or date, one row per award to one supplier, linked to the supplier's registry record where the identifier resolves (ES, FR, GB). Ireland, Poland and Norway above the EU thresholds only. |
 | `procurement_buyer` | Risk profile of a public buyer (the contracting body) in Spain or France — **beta**. Two calibrated scores: single-bid risk and supplier-insolvency exposure, each with a 1-10 score, a probability and the evidence awards. Never a supplier score. |
 | `procurement_buyers` | List scored public buyers by either score — a portfolio screen, a region view, or a name lookup to find a buyer's id. Beta, ES + FR. |
 | `procurement_relationship` | How dependent a public buyer and one of its five largest suppliers are on each other: awards, value, share, single-bid count, insolvency date. Beta, ES + FR. |
 
-Source: Spain (BORME), France (BODACC), United Kingdom (Companies House), Ireland (CRO), Poland (KRS), Norway (Brønnøysundregistrene / Enhetsregisteret, NLOD) — 26M+ companies. Daily updates. EU data residency.
+Source: Spain (BORME), France (BODACC), United Kingdom (Companies House), Ireland (CRO), Poland (KRS), Norway (Brønnøysundregistrene / Enhetsregisteret, NLOD), Finland (Kaupparekisteri), Sweden (Bolagsverket), Croatia (Sudski registar), Belgium (KBO/BCE), Denmark (CVR) — 26M+ companies. Daily updates for Spain, France, Ireland, Poland and Norway, monthly bulk plus daily delta for the UK, and every working day for Finland, Sweden, Belgium, Denmark and Croatia. EU data residency.
 
-Officer/director data is held for Spain, France, the UK and Norway. Ireland and Poland are company-level for now. Norway has no corporate-event stream, so the event tools return nothing for `country=NO`.
+Officer/director data is held for Spain, France, the UK and Norway. Ireland and Poland are company-level for now. Norway has no corporate-event stream, so the event tools return nothing for `country=NO` (nor for IE and PL). Finland, Sweden, Belgium, Croatia and Denmark are company records only, with register-change events (name, status, legal form and registered address; share capital for Croatia; dated when the change first appears in the register data, not gazette notices, none before 2026-09-30) and monitoring, but no officers and no registry-compliance signal. Corporate insolvency notices are linked by business ID (Finland), organisationsnummer (Sweden), MBS (Croatia) and CVR number (Denmark): Swedish notices are Bolagsverket's procedure data (konkurs, företagsrekonstruktion, ackordsförhandling), updated weekly, with no court, case number or link; Croatian notices are court decisions with court and case number where the register states them, only for companies still on the register; Danish notices come from CVR credit information (konkurs and tvangsakkord decisions), with no court or case number. Belgium has no insolvency notices (its bankruptcy shows in the company status and in its register-change events). Sole traders (enskild näringsverksamhet, trgovac pojedinac), enterprises of natural persons (eenmanszaak / entreprise individuelle), sole proprietorships (enkeltmandsvirksomhed) and estates are never served; Denmark has no share capital, and its status includes the register's bankruptcy state. Contains CVR data (Erhvervsstyrelsen), CC BY 4.0.
 
 ## Install
 
@@ -64,7 +64,7 @@ npm install -g prometiam-risk-mcp   # global install for the bin
 
 **It works without any key.** The server ships with a shared demo key — 30 requests a minute and 2,000 a day for everyone using it — so the first tool call answers right after `npx`. When the shared quota is used up the error tells you how to continue.
 
-For your own quota — **free 14-day trial: 1,000 calls/month, no credit card** — sign up at <https://www.prometiam.com/signup?utm_source=mcp> and set the key as an environment variable:
+For your own quota — **free 14-day trial: 1,000 calls, no credit card** — sign up at <https://www.prometiam.com/signup?utm_source=mcp> and set the key as an environment variable:
 
 ```bash
 export PROMETIAM_API_KEY="rk_live_..."

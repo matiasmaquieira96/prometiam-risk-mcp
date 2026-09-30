@@ -37,7 +37,7 @@ const SMITHERY_NAME = 'prometiam/risk-mcp'
 
 // Every country that must appear in any public description of this server. Norway shipped
 // 2026-07-26 and was missing from the registry listing for two days; this catches the next one.
-const COUNTRIES = ['Spain', 'France', 'Ireland', 'Poland', 'Norway']
+const COUNTRIES = ['Spain', 'France', 'Ireland', 'Poland', 'Norway', 'Finland', 'Sweden', 'Croatia', 'Belgium', 'Denmark']
 
 const problems = []
 const notes = []
