@@ -10,16 +10,16 @@
 import { z } from 'zod'
 import { DEMO_NOTE, getClient, RiskApiError } from './client.js'
 
-const Country = z.enum(['ES', 'FR', 'GB', 'IE', 'PL', 'NO', 'FI', 'SE', 'HR', 'BE', 'DK']).describe('Country code: ES (Spain, BORME), FR (France, BODACC), GB (UK, Companies House), IE (Ireland, CRO), PL (Poland, KRS), NO (Norway, Brønnøysundregistrene / Enhetsregisteret), FI (Finland, Kaupparekisteri, the Finnish Trade Register), SE (Sweden, Bolagsverket, the Swedish Companies Registration Office), HR (Croatia, Sudski registar, the Croatian court register), BE (Belgium, KBO/BCE, the Crossroads Bank for Enterprises), or DK (Denmark, CVR, the Danish Central Business Register). Ireland, Poland, Finland, Sweden, Croatia, Belgium and Denmark are company-level (companies only). Norway has companies and officers but no corporate-event stream, so the event tools return nothing for NO (nor for IE and PL). Finland, Sweden, Belgium, Croatia and Denmark have register-change events (name, status, legal form and registered address; share capital for HR), dated when the change first appears in the register data and none before 2026-09-30, and monitoring. Company records from the Finnish Trade Register: legal name, legal form, status, registered address, activity code and dates; no officers and no registry-compliance signal. Corporate insolvency notices are linked by business ID. Sweden: Company records from the Swedish Companies Registration Office (Bolagsverket): legal name, legal form, status, registered address, activity code and dates; no officers and no registry-compliance signal, and sole traders (enskild näringsverksamhet) are never served. Corporate insolvency notices (konkurs, företagsrekonstruktion, ackordsförhandling; weekly, no court or case number) are linked by organisationsnummer. Croatia: Company records from the Croatian court register (Sudski registar): legal name, legal form, status, registered address, activity code and dates; no officers and no registry-compliance signal, and sole traders (trgovac pojedinac) are never served. Corporate insolvency notices (court decisions, with court and case number where the register states them) are linked by MBS. Belgium: Company records from the Crossroads Bank for Enterprises (KBO/BCE): legal name, legal form, status, registered address, activity code and dates; no officers, no registry-compliance signal and no insolvency notices (Belgium is not an insolvency market: a bankruptcy shows in the company status and in its register-change events), and enterprises of natural persons (eenmanszaak / entreprise individuelle) are never served. Denmark: Company records from the Danish Central Business Register (CVR): legal name, legal form, status (including the register\'s bankruptcy state), registered address, activity code and dates; no officers, no registry-compliance signal and no share capital, and sole proprietorships (enkeltmandsvirksomhed) and estates are never served. Corporate insolvency notices (konkurs and tvangsakkord decisions from CVR credit information, no court or case number) are linked by CVR number. Defaults to first country in the API key allowlist.')
+const Country = z.enum(['ES', 'FR', 'GB', 'IE', 'PL', 'NO', 'FI', 'SE', 'HR', 'BE', 'DK', 'EE', 'SK']).describe('Country code: ES (Spain, BORME), FR (France, BODACC), GB (UK, Companies House), IE (Ireland, CRO), PL (Poland, KRS), NO (Norway, Brønnøysundregistrene / Enhetsregisteret), FI (Finland, Kaupparekisteri, the Finnish Trade Register), SE (Sweden, Bolagsverket, the Swedish Companies Registration Office), HR (Croatia, Sudski registar, the Croatian court register), BE (Belgium, KBO/BCE, the Crossroads Bank for Enterprises), DK (Denmark, CVR, the Danish Central Business Register), EE (Estonia, the e-Business Register, RIK), or SK (Slovakia, RPO, the Register of Legal Entities). Ireland, Poland, Finland, Sweden, Croatia, Belgium, Denmark, Estonia and Slovakia are company-level (companies only). Norway has companies and officers but no corporate-event stream, so the event tools return nothing for NO (nor for IE and PL). Finland, Sweden, Belgium, Croatia, Denmark, Estonia and Slovakia have register-change events (name, status, legal form and registered address; share capital for HR), dated when the change first appears in the register data and none before 2026-09-30, and monitoring. Company records from the Finnish Trade Register: legal name, legal form, status, registered address, activity code and dates; no officers and no registry-compliance signal. Corporate insolvency notices are linked by business ID. Sweden: Company records from the Swedish Companies Registration Office (Bolagsverket): legal name, legal form, status, registered address, activity code and dates; no officers and no registry-compliance signal, and sole traders (enskild näringsverksamhet) are never served. Corporate insolvency notices (konkurs, företagsrekonstruktion, ackordsförhandling; weekly, no court or case number) are linked by organisationsnummer. Croatia: Company records from the Croatian court register (Sudski registar): legal name, legal form, status, registered address, activity code and dates; no officers and no registry-compliance signal, and sole traders (trgovac pojedinac) are never served. Corporate insolvency notices (court decisions, with court and case number where the register states them) are linked by MBS. Belgium: Company records from the Crossroads Bank for Enterprises (KBO/BCE): legal name, legal form, status, registered address, activity code and dates; no officers, no registry-compliance signal and no insolvency notices (Belgium is not an insolvency market: a bankruptcy shows in the company status and in its register-change events), and enterprises of natural persons (eenmanszaak / entreprise individuelle) are never served. Denmark: Company records from the Danish Central Business Register (CVR): legal name, legal form, status (including the register\'s bankruptcy state), registered address, activity code and dates; no officers, no registry-compliance signal and no share capital, and sole proprietorships (enkeltmandsvirksomhed) and estates are never served. Corporate insolvency notices (konkurs and tvangsakkord from CVR credit information: one notice per proceeding, dated by the decision that opened it, with the latest stage of the proceeding; no court or case number) are linked by CVR number. Estonia: Company records from the Estonian e-Business Register (RIK): legal name, legal form, status (including liquidation and bankruptcy), registered address, activity code (EMTAK 2008 or 2025, per company) and dates; with register-change events and monitoring, but no officers, no registry-compliance signal and no insolvency notices. Sole traders (FIE) are never served, and the VAT number (KMKR) is searchable with `vat=`. Slovakia: Company records from the Slovak Register of Legal Entities (RPO): legal name, legal form, status (including bankruptcy (konkurz) and restructuring), registered address, activity code (SK NACE Rev. 2.1) and dates; with register-change events and monitoring, but no officers, no registry-compliance signal and no insolvency notices. Commercial legal persons only (no associations, foundations or other non-commercial entities); no VAT number (a `vat` search is refused); sole traders and other natural persons are never served. Defaults to first country in the API key allowlist.')
 
 /**
  * Monitoring covers a NARROWER set than the registry corpus — see the
  * `/monitor` request body in public/openapi.json, which pins country to
- * ES/IE/PL/FI/SE/BE/HR/DK. Norway, France and the UK have no monitoring implementation, so
+ * ES/IE/PL/FI/SE/BE/HR/DK/EE/SK. Norway, France and the UK have no monitoring implementation, so
  * they must not be offered here: an accepted value the API cannot honour is a
  * false capability, not a convenience.
  */
-const MonitorCountry = z.enum(['ES', 'IE', 'PL', 'FI', 'SE', 'BE', 'HR', 'DK']).describe('Country of the company to monitor: ES (default), IE, PL, FI, SE, BE, HR or DK. Monitoring is not available for FR, GB or NO.')
+const MonitorCountry = z.enum(['ES', 'IE', 'PL', 'FI', 'SE', 'BE', 'HR', 'DK', 'EE', 'SK']).describe('Country of the company to monitor: ES (default), IE, PL, FI, SE, BE, HR, DK, EE or SK. Monitoring is not available for FR, GB or NO.')
 
 const Limit = z.number().int().min(1).max(100).default(20).describe('Maximum number of results to return (1–100, default 20).')
 const Cursor = z.string().optional().describe('Pagination cursor — pass the previous response\'s pagination.next_cursor to fetch the next page.')
@@ -71,7 +71,7 @@ export const TOOLS: ToolDef[] = [
   // ── Companies ────────────────────────────────────────────────────────────
   {
     name: 'companies_search',
-    description: 'Search EU + UK companies in official registries by name or identifier. Returns companies with legal form, capital, status, registry coordinates, plus a cross-country status_canonical/stage and legal_form_canonical/abbreviation/family next to each register\'s own status/legal_form (null when the dictionary does not recognise the stored value — never a guess). Use country to scope the search to Spain (BORME), France (BODACC), the UK (Companies House), Ireland (CRO), Poland (KRS), Norway (Brønnøysundregistrene), Finland (Kaupparekisteri), Sweden (Bolagsverket), Croatia (Sudski registar), Belgium (KBO/BCE), or Denmark (CVR). Fuzzy name results carry a match_score (0–100) and are ranked by relevance, best first. NOTE: "dissolved" means different things by country — ES/FR still exists pending liquidation, GB/IE/PL/NO/FI no longer exists — read status_canonical, not status, to compare across countries.',
+    description: 'Search EU + UK companies in official registries by name or identifier. Every company is one standard object with the same keys in all thirteen countries (null where the register publishes no value): identifiers [{type, value}], vat_number and vat_number_source (register or rule; also in identifiers as type vat; `register`: published by the register (EE) or the register confirms VAT registration and the number is the legal format of its identifier (NO, FI, BE). `rule`: built from the company identifier (ES `ES`+NIF, FR `FR`+key+SIREN, PL `PL`+NIP, NO `NO`+number+`MVA`, FI, SE `SE`+number+`01`, BE, HR `HR`+OIB, DK): the format is right, the registration is not confirmed (check it with `GET /vat/{number}`). Null where the register says the company is not VAT-registered (NO, FI) and where no rule exists (GB, IE, SK, and EE without a published KMKR).), the standard legal_form abbreviation and legal_form_family beside the register\'s local_legal_form and local_legal_form_name, a standard status and stage beside the register\'s own local_status, one main activity_code with its scheme, label and NACE class, address with region, capital_amount and capital_eur, and registry_details for what only one register has (null when the dictionary does not recognise a stored value — never a guess). Use country to scope the search to Spain (BORME), France (BODACC), the UK (Companies House), Ireland (CRO), Poland (KRS), Norway (Brønnøysundregistrene), Finland (Kaupparekisteri), Sweden (Bolagsverket), Croatia (Sudski registar), Belgium (KBO/BCE), or Denmark (CVR). Fuzzy name results carry a match_score (0–100) and are ranked by relevance, best first. NOTE: "dissolved" means different things by country — ES/FR still exists pending liquidation, GB/IE/PL/NO/FI no longer exists — read status (the standard value), not local_status, to compare across countries.',
     schema: z.object({
       name: z.string().optional().describe('Company name — fuzzy normalized match.'),
       // 'nif' was removed here because handleCompaniesSearch did not read it. It does now
@@ -80,7 +80,7 @@ export const TOOLS: ToolDef[] = [
       // number", so a model holding a Spanish NIF was steered away from the one parameter
       // that would have answered it.
       nif: z.string().optional().describe('Spanish NIF/CIF — exact match, e.g. A78053147. Alias of company_number.'),
-      vat: z.string().optional().describe('VAT / tax identifier — exact match. Alias of company_number. For country FI, the Finnish VAT number FI plus the eight digits of the Y-tunnus, e.g. FI01120389; for country SE, the Swedish VAT number SE plus the ten digits of the organisationsnummer and 01, e.g. SE556012579001; for country HR, the Croatian VAT number HR plus the eleven digits of the OIB, e.g. HR27759560625; for country BE, the Belgian VAT number BE plus the ten digits of the enterprise number, e.g. BE0417497106; for country DK, the Danish VAT number DK plus the eight digits of the CVR number, e.g. DK24256790.'),
+      vat: z.string().optional().describe('VAT / tax identifier — exact match. Alias of company_number. For country FI, the Finnish VAT number FI plus the eight digits of the Y-tunnus, e.g. FI01120389; for country SE, the Swedish VAT number SE plus the ten digits of the organisationsnummer and 01, e.g. SE556012579001; for country HR, the Croatian VAT number HR plus the eleven digits of the OIB, e.g. HR27759560625; for country BE, the Belgian VAT number BE plus the ten digits of the enterprise number, e.g. BE0417497106; for country DK, the Danish VAT number DK plus the eight digits of the CVR number, e.g. DK24256790; for country EE, the Estonian VAT number (KMKR) EE plus nine digits, e.g. EE100354546, where the register publishes it (it is not the registry code); Slovakia has no VAT number, so vat is refused for country SK.'),
       siren: z.string().optional().describe('French SIREN (9 digits), e.g. 552032534.'),
       siret: z.string().optional().describe('French SIRET (14 digits).'),
       nip: z.string().optional().describe('Polish NIP (10 digits), exact match — use with country PL. The KRS number goes on company_number.'),
@@ -91,12 +91,13 @@ export const TOOLS: ToolDef[] = [
       company_number: z.string().optional().describe('Registry identifier — exact match. Resolves per country: Spanish NIF/CIF (A78053147), French SIREN, UK Companies House number (00445790, SC123456), the IE/PL/NO registration number, for country FI a Y-tunnus such as 0112038-9 (the hyphen is optional; a wrong check digit is a 400), for country SE an organisationsnummer such as 556012-5790 (the hyphen is optional; a wrong check digit, or a third digit below 2, is a 400), for country HR an MBS such as 080000604 (a dropped leading zero is restored; the check digit is advisory, so only a wrong length is a 400), for country BE an enterprise number such as 0417.497.106 (the dots and spaces are optional; a wrong check digit is a 400), or for country DK a CVR number such as 24256790 (eight digits; the mod-11 check is advisory, so only a number that is not eight digits is a 400).'),
       has_risk_flag: z.boolean().optional().describe('Spain only. Return only companies carrying a published risk flag (currently the AEAT >€600,000 tax-debtor list).'),
       risk_flag_type: z.enum(['tax_debt', 'debarment', 'regulator_sanction', 'subsidy', 'registry_compliance']).optional().describe('Restrict to one flag type. registry_compliance also works for GB, IE and NO.'),
-      status_canonical: z.enum([
+      status: z.enum([
         'active', 'active_strike_off_pending', 'suspended', 'not_yet_active',
         'in_restructuring', 'in_administration', 'in_receivership', 'insolvent',
         'in_liquidation_insolvent', 'in_liquidation', 'in_compulsory_liquidation',
         'in_dissolution', 'deregistered', 'merged', 'withheld',
-      ]).optional().describe('Filter by the cross-country canonical status rather than each country\'s own vocabulary. Works for every live country, but outside ES it must be combined with a name/company_number/siren/siret/nip/regon.'),
+      ]).optional().describe('Filter by the standard status, the same list in every country. Outside ES it must be combined with a name/company_number/siren/siret/nip/regon/oib.'),
+      local_status: z.string().optional().describe('Filter by the register\'s own status value (for example dissolved for GB, radiated for FR). Not together with status; outside ES it needs a name or company_number, like status.'),
       country: Country.optional(),
       limit: Limit,
       cursor: Cursor,
@@ -105,22 +106,39 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'company_detail',
-    description: 'Fetch a single company by Prometiam internal ID. Returns full profile including officers, registry coordinates, founding date, capital, current status (with status_canonical/stage) and legal form (with legal_form_canonical/abbreviation/family). recent_events (ES/FR/GB) carries the same served event_type + raw act_type as events_search. Get an ID from companies_search first. Pass include to attach extra blocks — notably risk_flags (published tax-debt / debarment signals) and insolvency.',
+    description: 'Fetch a single company by Prometiam internal ID. Returns full profile including officers, registry coordinates, founding date, capital, current standard status (with stage and the register\'s local_status), standard legal form (with local_legal_form), identifiers and registry_details. include=lei (Spain) adds lei_record, the GLEIF record; lei is the code string. recent_events (ES/FR/GB) carries the same served event_type + raw act_type as events_search. Get an ID from companies_search first. Pass include to attach extra blocks — notably risk_flags (published tax-debt / debarment signals) and insolvency.',
     schema: z.object({
       id: z.union([z.number().int(), z.string()]).describe('Prometiam internal company ID (integer).'),
       country: Country.optional(),
-      include: z.string().optional().describe('Comma-separated extra blocks: procurement, insolvency, lei, prospect, risk_flags — or all. risk_flags is Spain only and each row states whether its identifier was read directly from the source or reconstructed with name corroboration.'),
+      include: z.string().optional().describe('Comma-separated extra blocks: procurement, insolvency, financials, lei, prospect, risk_flags — or all. financials adds latest_financials (GB, FR, DK, SE, NO, FI, and listed companies in ES, PL, HR, BE; Scale plan and above; see company_financials for the limits). risk_flags is Spain only and each row states whether its identifier was read directly from the source or reconstructed with name corroboration.'),
     }),
     handler: (args) => safeCall(() => {
       const { id, ...rest } = args
       return getClient().get(`/companies/${id}`, rest)
     }),
   },
+  {
+    name: 'company_financials',
+    description: 'Annual financial statements of a company as filed with the official registers, mapped to one standard chart (revenue, gross profit, operating profit, net profit, assets, cash, equity, liabilities, employees), in the filing currency and in euro, up to ten fiscal years. A null figure was not stated in the filing, never zero. Annual accounts as filed, for GB, FR, DK, SE and NO, plus FI (statements filed digitally with PRH, the Finnish Patent and Registration Office: XBRL, the company own accounts, about one filer in twenty, registered since July 2023, no employee count, profit before tax before appropriations; plus listed groups) and listed companies only in ES, PL, HR and BE (their ESEF annual financial reports, IFRS, mostly consolidated; the report of every listed company is not held, and Polish reports arrive more than a year late; reports of Spanish listed companies are available free of charge on the CNMV website). FR: accounts keyed by INPI from the filed documents; none for companies that declare their accounts confidential (about 45% of French filers), and no profit and loss account where only it is declared confidential. Elsewhere only digitally filed accounts: GB electronic (iXBRL) filings, about three in four, where small and micro companies often file no profit and loss account; DK XBRL annual reports, where most small companies report gross profit instead of revenue (Contains CVR data (Erhvervsstyrelsen), CC BY 4.0.); SE digitally filed (iXBRL) reports only; NO the last three approved accounts, with no employee count in the accounts. The last three fiscal years at launch. Figures in the filing currency plus euro at the ECB annual average of the fiscal year (for comparison, not an accounting translation). Finnish companies also return data.tax_records (newest tax year first, from tax year 2020; Finnish Tax Administration public corporate income tax data, CC BY 4.0; 0 means none, not unknown; null when the read failed) and meta.tax_note. Contains data from the Finnish Patent and Registration Office (PRH), CC BY 4.0. Other companies in ES, PL, HR and BE (meta.availability listed_companies_only), Finnish companies without a digital filing (no_statement_held) and IE (PDF images) answer with empty statements and meta.availability. Needs the Scale plan or above (Starter, Professional and free trial keys get 10 calls a month, then upgrade_required). Every null figure is explained in statements[].quality.missing ({field: reason}: confidential, not_filed, reported_as_gross_profit, not_published_by_register, not_stated); for Norway the latest statement of the company itself carries the head count of the register record when the accounts have none (quality.notes employees_from_register, today\'s figure); company.employee_band is France only (INSEE size band today).',
+    schema: z.object({
+      id: z.union([z.number().int(), z.string()]).describe('Prometiam company ID from companies_search; the country is inferred from it.'),
+      country: Country.optional(),
+      years: z.number().int().min(1).max(10).optional().describe('Fiscal years to return, 1-10 (default 3).'),
+      statement_type: z.enum(['individual', 'consolidated', 'all']).optional().describe('Default all.'),
+      currency: z.enum(['native', 'eur', 'both']).optional().describe('Default both.'),
+      include: z.enum(['lines']).optional().describe('lines adds balance_sheet and income_statement with every mapped line.'),
+      include_superseded: z.boolean().optional().describe('Also return statements replaced by a later or amended filing, flagged superseded.'),
+    }),
+    handler: (args) => safeCall(() => {
+      const { id, ...rest } = args
+      return getClient().get(`/companies/${id}/financials`, rest)
+    }),
+  },
 
   // ── Corporate events ─────────────────────────────────────────────────────
   {
     name: 'events_search',
-    description: 'Search normalized corporate-event records (capital changes, director changes, dissolutions, mergers, insolvency, name changes, etc.) by company or date range, for Spain, France and the UK (from their gazettes) and, as register-change events, for Finland, Sweden, Belgium, Croatia and Denmark. Returns events with a served event_type matching this enum for each of those countries (each row also carries act_type, the raw BORME/BODACC/Companies House code it was derived from, or null when not yet covered), event date, before/after values, and source notice URL. The register-change events of the five (name, status, legal form and registered address; share capital for HR) are dated when the change first appears in the register data, are not gazette notices and start on 2026-09-30. Norway publishes no corporate-event gazette; Ireland and Poland are company-level (no event stream) — NO, IE and PL return an empty list.',
+    description: 'Search normalized corporate-event records (capital changes, director changes, dissolutions, mergers, insolvency, name changes, etc.) by company or date range, for Spain, France and the UK (from their gazettes) and, as register-change events, for Finland, Sweden, Belgium, Croatia, Denmark, Estonia and Slovakia. Returns events with a served event_type matching this enum for each of those countries (each row also carries act_type, the raw BORME/BODACC/Companies House code it was derived from, or null when not yet covered), event date, before/after values, and source notice URL. The register-change events of the five (name, status, legal form and registered address; share capital for HR) are dated when the change first appears in the register data, are not gazette notices and start on 2026-09-30. Norway publishes no corporate-event gazette; Ireland and Poland are company-level (no event stream) — NO, IE and PL return an empty list.',
     schema: z.object({
       company_name: z.string().optional().describe('Company name — fuzzy match.'),
       company_number: z.string().optional().describe('Registry registration number — exact match.'),
@@ -129,6 +147,7 @@ export const TOOLS: ToolDef[] = [
       date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Filter events on or before this date (YYYY-MM-DD).'),
       country: Country.optional(),
       limit: Limit,
+      include: z.enum(['notice']).optional().describe('notice attaches to each event the publication behind it: notice {id, source (BORME, BODACC or Companies House), published_date, reference, type, court, region, url}, or null for other countries (they have no notice).'),
       cursor: Cursor,
     }),
     handler: (args) => safeCall(() => getClient().get('/company-events/search', args)),
@@ -141,14 +160,16 @@ export const TOOLS: ToolDef[] = [
       company_name: z.string().optional().describe('Company name — fuzzy match.'),
       country: Country.optional(),
       limit: z.number().int().min(1).max(200).default(50).describe('Maximum events to return (1–200, default 50).'),
+      include: z.enum(['notice']).optional().describe('notice attaches to each event the publication behind it (BORME, BODACC or Companies House), or null for other countries.'),
     }),
     handler: (args) => safeCall(() => getClient().get('/company-events/timeline', args)),
   },
   {
     name: 'event_detail',
-    description: 'Fetch a single corporate-event record by Prometiam internal ID, with its full before/after values and the source registry notice. Get an ID from events_search or events_timeline first.',
+    description: 'Fetch a single corporate-event record by Prometiam internal ID, with its full before/after values and, with include=notice, the source publication (BORME, BODACC or Companies House; null for other countries). Get an ID from events_search or events_timeline first.',
     schema: z.object({
       id: z.union([z.number().int(), z.string()]).describe('Prometiam internal company-event ID.'),
+      include: z.enum(['notice']).optional().describe('notice attaches the publication behind the event, or null for other countries.'),
     }),
     handler: (args) => safeCall(() => getClient().get(`/company-events/records/${args.id}`)),
   },
@@ -156,7 +177,7 @@ export const TOOLS: ToolDef[] = [
   // ── People ───────────────────────────────────────────────────────────────
   {
     name: 'people_search',
-    description: 'Search officers / directors / shareholders by name across EU + UK registries. Returns matching people with their appointment counts, ranked by a fuzzy-match match_score (0–100), best first. Use person_detail for a full appointment history. Scope with country — officer-level data is held for Spain, France, the UK and Norway; Ireland, Poland, Finland, Sweden, Croatia, Belgium and Denmark are company-level only.',
+    description: 'Search officers / directors / shareholders by name across EU + UK registries. Returns matching people with their appointment counts, ranked by a fuzzy-match match_score (0–100), best first. Use person_detail for a full appointment history. Scope with country — officer-level data is held for Spain, France, the UK and Norway; Ireland, Poland, Finland, Sweden, Croatia, Belgium, Denmark, Estonia and Slovakia are company-level only.',
     schema: z.object({
       name: z.string().min(2).describe('Person name — normalized pattern match (min 2 characters).'),
       country: Country.optional(),
@@ -190,7 +211,7 @@ export const TOOLS: ToolDef[] = [
   // ── Sanctions ────────────────────────────────────────────────────────────
   {
     name: 'sanctions_screen',
-    description: 'Screen a person or entity name against 44,000+ active sanctions and export-control designations with trigram fuzzy match. Covers five sanctions lists — EU consolidated, UN, OFAC, UK OFSI, and the French Registre des gels — plus 11 US export-control lists (BIS Entity List, Denied Persons, Unverified, Military End User; State ITAR-Debarred and Nonproliferation; OFAC SSI, CMIC, MBS, PLC, CAPTA). Refreshed daily. Returns matches with confidence score (0–100), source list, and aliases. Use threshold to control match strictness.',
+    description: 'Screen a person or entity name against 44,000+ active sanctions and export-control designations with trigram fuzzy match. Covers five sanctions lists — EU consolidated, UN, OFAC, UK OFSI, and the French Registre des gels — plus 11 US export-control lists (BIS Entity List, Denied Persons, Unverified, Military End User; State ITAR-Debarred and Nonproliferation; OFAC SSI, CMIC, MBS, PLC, CAPTA). Refreshed daily. Returns matches with confidence score (0–100), source list, and aliases. Names in non-Latin scripts (Cyrillic, Greek, Arabic and others) are transliterated to Latin letters, in the query and in the listed names, before matching, so a name in its own script and in Latin spelling match the same entity. Use threshold to control match strictness. BETA.',
     schema: z.object({
       name: z.string().min(2).describe('Name to screen.'),
       threshold: z.number().int().min(50).max(100).default(80).describe('Minimum match-confidence percentage (50–100, default 80).'),
@@ -236,7 +257,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'insolvency_notices_search',
-    description: 'Search CORPORATE insolvency notices published in official gazettes and registers across France, Germany, the UK, Austria, Switzerland, Norway, Finland, the US, the Netherlands, Denmark, Croatia and Sweden. Use this for distress coverage in markets where no company registry is held (DE, AT, CH, US, NL) — there the notices stand alone and are not linked to a company record. Norway, Finland, Denmark, Croatia and Sweden have registry coverage, so their notices can be cross-referenced against companies_search with the same country code (for FI, DK, HR and SE the notices are linked by business ID, CVR number, MBS and organisationsnummer: a company record with include=insolvency returns them). DK notices come from CVR credit information (konkurs and tvangsakkord decisions, dated by the decision, no court or case number); HR notices are court decisions from the Croatian court register (only companies still on the register); SE notices are Bolagsverket\'s procedure data (konkurs, företagsrekonstruktion, ackordsförhandling), updated weekly, with no court, case number or link, and proceedings that ended before collection are not included. Belgium is not an insolvency market. Personal/consumer insolvency is deliberately excluded and is never returned. Distinct from insolvency_search, which covers the linked ES/FR/GB risk-notice corpus.',
+    description: 'Search CORPORATE insolvency notices published in official gazettes and registers across France, Germany, the UK, Austria, Switzerland, Norway, Finland, the US, the Netherlands, Denmark, Croatia and Sweden. Use this for distress coverage in markets where no company registry is held (DE, AT, CH, US, NL) — there the notices stand alone and are not linked to a company record. Norway, Finland, Denmark, Croatia and Sweden have registry coverage, so their notices can be cross-referenced against companies_search with the same country code (for FI, DK, HR and SE the notices are linked by business ID, CVR number, MBS and organisationsnummer: a company record with include=insolvency returns them). DK notices come from CVR credit information (konkurs and tvangsakkord: one notice per proceeding, dated by the decision that opened it, with the latest stage of the proceeding; no court or case number); HR notices are court decisions from the Croatian court register (only companies still on the register); SE notices are Bolagsverket\'s procedure data (konkurs, företagsrekonstruktion, ackordsförhandling), updated weekly, with no court, case number or link, and proceedings that ended before collection are not included. Belgium is not an insolvency market. Personal/consumer insolvency is deliberately excluded and is never returned. Distinct from insolvency_search, which covers the linked ES/FR/GB risk-notice corpus.',
     schema: z.object({
       name: z.string().min(2).optional().describe('Company name — matched anywhere in the normalized name (min 2 characters).'),
       country: z.enum(['FR', 'DE', 'GB', 'AT', 'CH', 'NO', 'FI', 'US', 'NL', 'DK', 'HR', 'SE']).optional().describe('Insolvency-coverage country. This is NOT the same set as the company-registry countries.'),
@@ -307,7 +328,7 @@ export const TOOLS: ToolDef[] = [
     description: 'Add a name to your sanctions watchlist (sanctions_watch scope, Starter and above): the API re-screens it against every list update and reports new hits on sanctions_watchlist, or calls webhook_url when set.',
     schema: z.object({
       name: z.string().min(2).max(200).describe('Name to watch.'),
-      entity_type: z.enum(['person', 'company', 'vessel']).optional(),
+      entity_type: z.enum(['person', 'company', 'vessel', 'aircraft']).optional(),
       webhook_url: z.string().url().optional().describe('https URL called when a new hit appears.'),
     }),
     handler: (args) => safeCall(() => getClient().post('/sanctions/watchlist', args)),
@@ -373,16 +394,6 @@ export const TOOLS: ToolDef[] = [
     handler: (args) => safeCall(() => getClient().get(`/records/${args.id}`)),
   },
 
-  // ── Notices ──────────────────────────────────────────────────────────────
-  {
-    name: 'notice_detail',
-    description: 'Fetch a registry gazette notice (PDF edition) by Prometiam internal ID. Returns edition metadata, parse status, the PDF URL, SHA-256 hash, and raw extracted text. Each Spanish BORME edition is one notice.',
-    schema: z.object({
-      id: z.union([z.number().int(), z.string()]).describe('Prometiam internal notice ID.'),
-    }),
-    handler: (args) => safeCall(() => getClient().get(`/notices/${args.id}`)),
-  },
-
   // ── Coverage / account ───────────────────────────────────────────────────
   {
     name: 'coverage',
@@ -400,7 +411,7 @@ export const TOOLS: ToolDef[] = [
   // ── Validation (VAT / LEI) ─────────────────────────────────────────────────
   {
     name: 'vat_validate',
-    description: 'Validate an EU VAT number against VIES (the European Commission\'s VAT Information Exchange System) and return the registered trader name and address when valid. Covers the 27 EU member states plus XI (Northern Ireland); Greek numbers use the EL prefix and GB VAT is out of scope post-Brexit. Live official check — returns a retryable error when a member-state registry is temporarily down (not a false "invalid").',
+    description: 'Validate an EU VAT number against VIES (the European Commission\'s VAT Information Exchange System) and return the registered trader name and address when valid. Covers the 27 EU member states plus XI (Northern Ireland); Greek numbers use the EL prefix and GB VAT is out of scope post-Brexit. Live official check — returns a retryable error when a member-state registry is temporarily down (not a false "invalid"). When VIES says a Spanish or German number is valid but withholds the name, registry_match {company_id, company_name, address, register} names the company our register holds under that number: register data, not VIES confirmation.',
     schema: z.object({
       vat: z.string().min(3).describe('Full VAT number including the 2-letter country prefix, e.g. IE6388047V or DE811569869. Spaces and punctuation are ignored.'),
     }),
@@ -435,7 +446,7 @@ export const TOOLS: ToolDef[] = [
   // ── Company monitoring ─────────────────────────────────────────────────────
   {
     name: 'monitor_list',
-    description: 'List the companies currently subscribed to ongoing monitoring for this API key, with their labels and last-alert timestamps. Company monitoring (ES, IE, PL, FI, SE, BE, HR, DK) emits status changes, dissolutions, sanctions matches and, for ES and FI/SE/BE/HR/DK, corporate events to a webhook.',
+    description: 'List the companies currently subscribed to ongoing monitoring for this API key, with their labels and last-alert timestamps. Company monitoring (ES, IE, PL, FI, SE, BE, HR, DK, EE, SK) emits status changes, dissolutions, sanctions matches and, for ES and FI/SE/BE/HR/DK/EE/SK, corporate events to a webhook.',
     schema: z.object({}),
     handler: () => safeCall(() => getClient().get('/monitor')),
   },
@@ -449,7 +460,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'monitor_subscribe',
-    description: 'Subscribe a company to ongoing monitoring. Status changes, dissolutions, sanctions matches and corporate events (ES and FI/SE/BE/HR/DK) are scanned daily and POSTed to your webhook_url (HMAC-SHA256 signed). Returns the monitor ID and a webhook_secret (shown once). Available for Spain (ES), Ireland (IE), Poland (PL), Finland (FI), Sweden (SE), Belgium (BE), Croatia (HR) and Denmark (DK) only. This creates a persistent subscription — confirm intent before calling.',
+    description: 'Subscribe a company to ongoing monitoring. Status changes, dissolutions, sanctions matches and corporate events (ES and FI/SE/BE/HR/DK/EE/SK) are scanned daily and POSTed to your webhook_url (HMAC-SHA256 signed). Returns the monitor ID and a webhook_secret (shown once). Available for Spain (ES), Ireland (IE), Poland (PL), Finland (FI), Sweden (SE), Belgium (BE), Croatia (HR), Denmark (DK), Estonia (e-Business Register) and Slovakia (RPO) only. This creates a persistent subscription — confirm intent before calling.',
     schema: z.object({
       company_id: z.union([z.number().int(), z.string()]).describe('Prometiam internal company ID to monitor (from companies_search / company_detail).'),
       webhook_url: z.string().url().describe('HTTPS URL that receives signed alert POSTs.'),
