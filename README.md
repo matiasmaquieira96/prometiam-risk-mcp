@@ -1,6 +1,6 @@
 # `prometiam-risk-mcp`
 
-> Model Context Protocol server for the **Prometiam company data API** — official company-registry data for Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium, Denmark, Estonia and Slovakia, plus directors, corporate events, insolvency, VAT/LEI lookup, sanctions screening, Spanish public-procurement awards and public-buyer risk scores, as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
+> Model Context Protocol server for the **Prometiam company data API** — official company-registry data for Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium, Denmark, Estonia and Slovakia, plus directors, corporate events, insolvency, VAT/LEI lookup, sanctions screening, annual financial statements, public-procurement awards (Spain, France, the UK, Ireland, Poland, Norway) and public-buyer risk scores (Spain, France), as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
 
 [![npm version](https://img.shields.io/npm/v/prometiam-risk-mcp.svg)](https://www.npmjs.com/package/prometiam-risk-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -21,7 +21,7 @@
 | `people_search` | Search officers / directors / shareholders by name across registries. |
 | `person_detail` | Officer / director profile with full appointment history across companies. |
 | `directors_network` | Cross-directorship rollup — people appointed to many companies (nominee/hub detection, ES). |
-| `sanctions_screen` | Trigram-fuzzy match against 44,000+ active designations — five sanctions lists (EU consolidated, UN, OFAC, UK OFSI, French Registre des gels) plus 11 US export-control lists (BIS Entity List, Denied Persons, Unverified, MEU; State ITAR-Debarred, ISN; OFAC SSI, CMIC, MBS, PLC, CAPTA). Refreshed daily. `include_pep=true` adds a PEP block (beta, ES, national politicians only — no relatives or close associates). |
+| `sanctions_screen` | Trigram-fuzzy match against 44,000+ active designations — five sanctions lists (EU consolidated, UN, OFAC, the UK Sanctions List (FCDO), French Registre des gels) plus 11 US export-control lists (BIS Entity List, Denied Persons, Unverified, MEU; State ITAR-Debarred, ISN; OFAC SSI, CMIC, MBS, PLC, CAPTA). Refreshed daily. `include_pep=true` adds a PEP block (beta, ES, national politicians only — no relatives or close associates). |
 | `sanctions_entity` | Full detail for one sanctions entity by ID — aliases, programme, listing date. |
 | `sanctions_changes` | Additions, removals and amendments detected on the sanctions lists, newest first — answer "what changed" without re-screening a whole book of business. |
 | `sanctions_watchlist` | Your sanctions watchlists and any recent hits against them. Read-only; requires the `sanctions_watch` scope. |
@@ -48,9 +48,9 @@
 | `procurement_buyers` | List scored public buyers by either score — a portfolio screen, a region view, or a name lookup to find a buyer's id. Beta, ES + FR. |
 | `procurement_relationship` | How dependent a public buyer and one of its five largest suppliers are on each other: awards, value, share, single-bid count, insolvency date. Beta, ES + FR. |
 
-Source: Spain (BORME), France (BODACC), United Kingdom (Companies House), Ireland (CRO), Poland (KRS), Norway (Brønnøysundregistrene / Enhetsregisteret, NLOD), Finland (Kaupparekisteri), Sweden (Bolagsverket), Croatia (Sudski registar), Belgium (KBO/BCE), Denmark (CVR), Estonia (e-Business Register), Slovakia (RPO) — 26M+ companies. Daily updates for Spain, France, Ireland, Poland and Norway, monthly bulk plus daily delta for the UK, and every working day for Finland, Sweden, Belgium, Denmark and Croatia. EU data residency.
+Source: Spain (BORME), France (BODACC), United Kingdom (Companies House), Ireland (CRO), Poland (KRS), Norway (Brønnøysundregistrene / Enhetsregisteret, NLOD), Finland (Kaupparekisteri), Sweden (Bolagsverket), Croatia (Sudski registar), Belgium (KBO/BCE), Denmark (CVR), Estonia (e-Business Register), Slovakia (RPO) — 33M+ companies. Daily updates for Spain, France, Ireland, Poland and Norway, monthly bulk plus daily delta for the UK, and every working day for Finland, Sweden, Belgium, Denmark, Croatia, Estonia and Slovakia. EU data residency.
 
-Officer/director data is held for Spain, France, the UK and Norway. Ireland and Poland are company-level for now. Norway has no corporate-event stream, so the event tools return nothing for `country=NO` (nor for IE and PL). Finland, Sweden, Belgium, Croatia, Denmark, Estonia and Slovakia are company records only, with register-change events (name, status, legal form and registered address; share capital for Croatia; dated when the change first appears in the register data, not gazette notices, none before 2026-09-30) and monitoring, but no officers and no registry-compliance signal. Corporate insolvency notices are linked by business ID (Finland), organisationsnummer (Sweden), MBS (Croatia) and CVR number (Denmark): Swedish notices are Bolagsverket's procedure data (konkurs, företagsrekonstruktion, ackordsförhandling), updated weekly, with no court, case number or link; Croatian notices are court decisions with court and case number where the register states them, only for companies still on the register; Danish notices come from CVR credit information (konkurs and tvangsakkord): one notice per proceeding, dated by the decision that opened it, with the latest stage of the proceeding, with no court or case number. Belgium has no insolvency notices (its bankruptcy shows in the company status and in its register-change events). Sole traders (enskild näringsverksamhet, trgovac pojedinac), enterprises of natural persons (eenmanszaak / entreprise individuelle), sole proprietorships (enkeltmandsvirksomhed) and estates are never served; Denmark has no share capital, and its status includes the register's bankruptcy state. Contains CVR data (Erhvervsstyrelsen), CC BY 4.0.
+Officer/director data is held for Spain, France, the UK and Norway. Ireland and Poland are company-level for now. Norway has no corporate-event stream, so the event tools return nothing for `country=NO` (nor for IE and PL). Finland, Sweden, Belgium, Croatia, Denmark, Estonia and Slovakia are company records only, with register-change events (name, status, legal form and registered address; share capital for Croatia; dated when the change first appears in the register data, not gazette notices, none before 2026-09-30) and monitoring, but no officers and no registry-compliance signal. Corporate insolvency notices are linked by business ID (Finland), organisationsnummer (Sweden), MBS (Croatia) and CVR number (Denmark): Swedish notices are Bolagsverket's procedure data (konkurs, företagsrekonstruktion, ackordsförhandling), updated weekly, with no court, case number or link; Croatian notices are court decisions with court and case number where the register states them, only for companies still on the register; Danish notices come from CVR credit information (konkurs and tvangsakkord): one notice per proceeding, dated by the decision that opened it, with the latest stage of the proceeding, with no court or case number. Belgium, Estonia and Slovakia have no insolvency notices (their bankruptcy shows in the company status and in their register-change events). Sole traders (enskild näringsverksamhet, trgovac pojedinac), enterprises of natural persons (eenmanszaak / entreprise individuelle), sole proprietorships (enkeltmandsvirksomhed) and estates are never served; Denmark has no share capital, and its status includes the register's bankruptcy state. Every company object carries `vat_number` and `vat_number_source` (published by the register, or built from the identifier by rule where the registration is not confirmed; null for the UK, Ireland and Slovakia). Contains CVR data (Erhvervsstyrelsen), CC BY 4.0.
 
 ## Install
 
@@ -64,7 +64,7 @@ npm install -g prometiam-risk-mcp   # global install for the bin
 
 **It works without any key.** The server ships with a shared demo key — 30 requests a minute and 2,000 a day for everyone using it — so the first tool call answers right after `npx`. When the shared quota is used up the error tells you how to continue.
 
-For your own quota — **free 14-day trial: 1,000 calls, no credit card** — sign up at <https://www.prometiam.com/signup?utm_source=mcp> and set the key as an environment variable:
+For your own quota — **14-day free trial: 1,000 calls; a card is required, nothing is charged for 14 days** — sign up at <https://www.prometiam.com/signup?utm_source=mcp> and set the key as an environment variable:
 
 ```bash
 export PROMETIAM_API_KEY="rk_live_..."
@@ -153,7 +153,7 @@ Once installed and configured, you can verify the server lists tools without spi
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | PROMETIAM_API_KEY=rk_live_... npx -y prometiam-risk-mcp
 ```
 
-You should see a JSON-RPC response with all 29 tools and their schemas.
+You should see a JSON-RPC response with all 35 tools and their schemas.
 
 ## Rate limits & pricing
 

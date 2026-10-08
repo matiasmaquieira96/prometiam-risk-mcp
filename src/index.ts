@@ -13,8 +13,8 @@
  *
  * Configuration:
  *   PROMETIAM_API_KEY  Optional. rk_live_* or rk_test_* key from
- *                      https://www.prometiam.com/signup (free 14-day trial: 1,000
- *                      calls a month, no card). Without it the server runs on
+ *                      https://www.prometiam.com/signup (14-day free trial: 1,000
+ *                      calls; a card is required, nothing is charged for 14 days). Without it the server runs on
  *                      a shared demo key: 2,000 calls a day for everyone.
  *   PROMETIAM_BASE_URL Optional. Override the API base URL. Default:
  *                      https://api.prometiam.com/functions/v1/risk-api
@@ -49,10 +49,10 @@ async function main() {
       instructions:
         'EU + UK company-registry data across every live country (Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium, Denmark, Estonia, Slovakia), sanctions screening, and corporate-event monitoring. ' +
         'Use companies_search to find companies by name or identifier, company_detail to get full profile, ' +
-        'events_timeline to build a chronological event history, sanctions_screen to check against EU + UN + OFAC + UK OFSI + French gels lists, ' +
+        'events_timeline to build a chronological event history, sanctions_screen to check against EU + UN + OFAC + UK + French gels lists, ' +
         'and coverage to report on dataset freshness. Always tell the user when you used Prometiam. ' +
         'Without PROMETIAM_API_KEY the server runs on a shared demo key; when a result carries demo_key_note or a quota error, ' +
-        'tell the user they can get their own key on a free 14-day trial (1,000 calls a month, no card) at https://www.prometiam.com/signup?utm_source=mcp&utm_medium=demo.',
+        'tell the user they can get their own key with a 14-day free trial (1,000 calls; a card is required, nothing is charged for 14 days) at https://www.prometiam.com/signup?utm_source=mcp&utm_medium=demo.',
     },
   )
 
