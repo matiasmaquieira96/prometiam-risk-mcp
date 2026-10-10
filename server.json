@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.matiasmaquieira96/risk-mcp",
   "title": "Prometiam Company Data",
-  "description": "KYB: Spain France UK Ireland Poland Norway Finland Sweden Croatia Belgium Denmark EE SK US",
-  "version": "0.4.24",
+  "description": "KYB: Spain France UK Ireland Poland Norway Finland Sweden Croatia Belgium Denmark EE SK CH US",
+  "version": "0.4.25",
   "websiteUrl": "https://www.prometiam.com/risk-api",
   "repository": {
     "url": "https://github.com/matiasmaquieira96/prometiam-risk-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "prometiam-risk-mcp",
-      "version": "0.4.24",
+      "version": "0.4.25",
       "transport": {
         "type": "stdio"
       },

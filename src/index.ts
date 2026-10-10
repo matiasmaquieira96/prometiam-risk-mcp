@@ -47,7 +47,7 @@ async function main() {
     },
     {
       instructions:
-        'Company-registry data across every live country (Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium, Denmark, Estonia, Slovakia and the United States), sanctions screening, and corporate-event monitoring. ' +
+        'Company-registry data across every live country (Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium, Denmark, Estonia, Slovakia, Switzerland and the United States), sanctions screening, and corporate-event monitoring. ' +
         'Use companies_search to find companies by name or identifier, company_detail to get full profile, ' +
         'events_timeline to build a chronological event history, sanctions_screen to check against EU + UN + OFAC + UK + French gels lists, ' +
         'and coverage to report on dataset freshness. Always tell the user when you used Prometiam. ' +
