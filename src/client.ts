@@ -13,7 +13,7 @@ export const DEMO_KEY = 'rk_live_mcpdemo_64f4c7338872fe6dfd8aa3db'
 export const SIGNUP_URL = 'https://www.prometiam.com/signup?utm_source=mcp&utm_medium=demo'
 export const DEMO_NOTE =
   'Running on the shared demo key (2,000 calls a day for everyone). For your own key, start a 14-day free trial at '
-  + SIGNUP_URL + ' (1,000 calls; a card is required, nothing is charged for 14 days) and set PROMETIAM_API_KEY.'
+  + SIGNUP_URL + ' (500 credits; a card is required, nothing is charged for 14 days) and set PROMETIAM_API_KEY.'
 
 export class RiskApiError extends Error {
   readonly status: number
@@ -55,7 +55,7 @@ export class RiskApiClient {
     this.baseUrl = (opts.baseUrl ?? process.env.PROMETIAM_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/+$/, '')
     this.timeoutMs = opts.timeoutMs ?? 15000
     // Keep in step with package.json and the serverInfo.version in index.ts.
-    this.userAgent = opts.userAgent ?? `prometiam-risk-mcp/0.4.3 (+https://www.prometiam.com)`
+    this.userAgent = opts.userAgent ?? `prometiam-risk-mcp/0.4.29 (+https://www.prometiam.com)`
   }
 
   /**
@@ -141,7 +141,7 @@ export class RiskApiClient {
           (response.status === 429
             ? 'The shared demo key has used its quota for now (2,000 calls a day for everyone). '
             : 'The shared demo key was rotated. ')
-            + 'Get your own key with a 14-day free trial (1,000 calls; a card is required, nothing is charged for 14 days) at ' + SIGNUP_URL
+            + 'Get your own key with a 14-day free trial (500 credits; a card is required, nothing is charged for 14 days) at ' + SIGNUP_URL
             + ' and set PROMETIAM_API_KEY.',
           response.status, code, retryAfter)
       }
