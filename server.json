@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.matiasmaquieira96/risk-mcp",
   "title": "Prometiam Company Data",
-  "description": "KYB API: company registry data from 28 countries, insolvency notices and sanctions screening",
-  "version": "0.4.43",
+  "description": "KYB API: company registry data from 29 countries, insolvency notices and sanctions screening",
+  "version": "0.4.44",
   "websiteUrl": "https://www.prometiam.com/risk-api",
   "repository": {
     "url": "https://github.com/matiasmaquieira96/prometiam-risk-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "prometiam-risk-mcp",
-      "version": "0.4.43",
+      "version": "0.4.44",
       "transport": {
         "type": "stdio"
       },
@@ -66,10 +66,18 @@
         "monitor_get",
         "monitor_subscribe",
         "monitor_stop",
-        "prospect_companies_search",
-        "prospect_people_search",
-        "prospect_company_contacts",
-        "prospect_suppress"
+        "companies_lookup",
+        "company_financials",
+        "insolvency_check",
+        "procurement_awards",
+        "procurement_buyer",
+        "procurement_buyers",
+        "procurement_relationship",
+        "sanctions_changes",
+        "sanctions_screen_batch",
+        "sanctions_unwatch",
+        "sanctions_watch",
+        "sanctions_watchlist"
       ],
       "countries": [
         "ES",
@@ -98,7 +106,9 @@
         "BR",
         "CO",
         "SG",
-        "TW"
+        "TW",
+        "CZ",
+        "DE"
       ],
       "data_residency": "EU (Frankfurt)",
       "license": "MIT"
