@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.matiasmaquieira96/risk-mcp",
   "title": "Prometiam Company Data",
-  "description": "KYB API: company registry data from 29 countries, insolvency notices and sanctions screening",
-  "version": "0.4.44",
+  "description": "Company data and KYB API for 29 countries: monitoring, financial statements, insolvency, sanctions",
+  "version": "0.4.45",
   "websiteUrl": "https://www.prometiam.com/risk-api",
   "repository": {
     "url": "https://github.com/matiasmaquieira96/prometiam-risk-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "prometiam-risk-mcp",
-      "version": "0.4.44",
+      "version": "0.4.45",
       "transport": {
         "type": "stdio"
       },
@@ -45,6 +45,7 @@
       "tools": [
         "companies_search",
         "company_detail",
+        "company_by_identifier",
         "events_search",
         "events_timeline",
         "event_detail",

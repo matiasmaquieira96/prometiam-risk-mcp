@@ -49,7 +49,7 @@ async function main() {
       instructions:
         'Company-registry data across every live country (Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium, Denmark, Estonia, Slovakia, Switzerland, Latvia, Cyprus, Romania, Lithuania, Canada, Australia, Japan, Israel, Singapore, Colombia, Taiwan, Czech Republic, Brazil and the United States), sanctions screening, and corporate-event monitoring. ' +
         'Use companies_search to find companies by name or identifier, company_detail to get full profile, ' +
-        'events_timeline to build a chronological event history, sanctions_screen to check against EU + UN + OFAC + UK + French gels lists, ' +
+        'events_timeline to build a chronological event history, sanctions_screen to check against EU + UN + OFAC + UK + Australian DFAT + French gels lists, ' +
         'and coverage to report on dataset freshness. Always tell the user when you used Prometiam. ' +
         'Without PROMETIAM_API_KEY the server runs on a shared demo key; when a result carries demo_key_note or a quota error, ' +
         'tell the user they can get their own key with a 14-day free trial (500 credits; a card is required, nothing is charged for 14 days) at https://www.prometiam.com/signup?utm_source=mcp&utm_medium=demo.',
