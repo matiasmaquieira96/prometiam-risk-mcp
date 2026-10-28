@@ -15,6 +15,16 @@ export const DEMO_NOTE =
   'Running on the shared demo key (2,000 calls a day for everyone). For your own key, start a 14-day free trial at '
   + SIGNUP_URL + ' (500 credits; a card is required, nothing is charged for 14 days) and set PROMETIAM_API_KEY.'
 
+/**
+ * True for a configured value that is not a key: empty, or the placeholder a pasted config still carries
+ * (rk_live_your_key_here). Sent as a real key it answers 401 on the first call, so it counts as unset.
+ */
+export function isPlaceholderKey(raw: string | undefined): boolean {
+  const v = (raw ?? '').trim()
+  if (!v) return true
+  return /your|here|placeholder|example|changeme|replace|api_key|x{4}|\.{2,}|[<>{}$]/i.test(v.replace(/^rk_(live|test)_/, ''))
+}
+
 export class RiskApiError extends Error {
   readonly status: number
   readonly code: string
@@ -45,8 +55,13 @@ export class RiskApiClient {
   private readonly userAgent: string
 
   constructor(opts: RiskApiClientOptions = {}) {
-    const apiKey = opts.apiKey ?? process.env.PROMETIAM_API_KEY ?? DEMO_KEY
+    const configured = opts.apiKey ?? process.env.PROMETIAM_API_KEY
+    const placeholder = configured !== undefined && isPlaceholderKey(configured)
+    const apiKey = configured === undefined || placeholder ? DEMO_KEY : configured.trim()
     this.isDemo = apiKey === DEMO_KEY
+    if (placeholder && configured.trim()) {
+      console.error('[prometiam-risk-mcp] PROMETIAM_API_KEY looks like a placeholder, so it is ignored and the shared demo key is used. Put your own key there to use it.')
+    }
     if (this.isDemo) console.error('[prometiam-risk-mcp] ' + DEMO_NOTE)
     if (!apiKey.startsWith('rk_live_') && !apiKey.startsWith('rk_test_')) {
       throw new Error('Invalid API key format. Prometiam keys start with rk_live_ or rk_test_.')
@@ -55,7 +70,7 @@ export class RiskApiClient {
     this.baseUrl = (opts.baseUrl ?? process.env.PROMETIAM_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/+$/, '')
     this.timeoutMs = opts.timeoutMs ?? 15000
     // Keep in step with package.json and the serverInfo.version in index.ts.
-    this.userAgent = opts.userAgent ?? `prometiam-risk-mcp/0.4.30 (+https://www.prometiam.com)`
+    this.userAgent = opts.userAgent ?? `prometiam-risk-mcp/0.4.49 (+https://www.prometiam.com)`
   }
 
   /**

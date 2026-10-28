@@ -43,11 +43,11 @@ async function main() {
       // the version MCP clients display. It has drifted twice now (0.2.0 while
       // the package shipped 0.2.2; 0.2.4 while it shipped 0.2.5), so when you
       // bump, grep the whole package for the old string.
-      version: '0.4.30',
+      version: '0.4.49',
     },
     {
       instructions:
-        'Company-registry data across every live country (Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium, Denmark, Estonia, Slovakia, Switzerland, Latvia, Cyprus, Romania, Lithuania, Canada, Australia, Japan, Israel, Singapore, Colombia, Taiwan, Czech Republic, Brazil and the United States), sanctions screening, and corporate-event monitoring. ' +
+        'Company-registry data across every live country (Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium, Denmark, Estonia, Slovakia, Switzerland, Latvia, Cyprus, Romania, Lithuania, Canada, Australia, Japan, Israel, Singapore, Colombia, Taiwan, Czech Republic, Germany, Ukraine, Brazil, Argentina and the United States), sanctions screening, and corporate-event monitoring. ' +
         'Use companies_search to find companies by name or identifier, company_detail to get full profile, ' +
         'events_timeline to build a chronological event history, sanctions_screen to check against EU + UN + OFAC + UK + Australian DFAT + French gels lists, ' +
         'and coverage to report on dataset freshness. Always tell the user when you used Prometiam. ' +
