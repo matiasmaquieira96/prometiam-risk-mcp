@@ -1,19 +1,30 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.matiasmaquieira96/risk-mcp",
-  "title": "Prometiam Company Data",
+  "name": "com.prometiam/risk-mcp",
+  "title": "Prometiam Risk Intelligence",
   "description": "Company data and KYB API for 35 countries: monitoring, financial statements, insolvency, sanctions",
-  "version": "0.4.54",
+  "version": "0.4.55",
   "websiteUrl": "https://www.prometiam.com/risk-api",
-  "repository": {
-    "url": "https://github.com/matiasmaquieira96/prometiam-risk-mcp",
-    "source": "github"
-  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.prometiam.com/functions/v1/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Your Prometiam API key as a Bearer token (Bearer rk_live_...; the word Bearer is optional). Optional: with no header the server runs in demo mode on a shared key (30 requests a minute and 2,000 calls a day for everyone; sanctions screening and company events need your own key). Your own key comes with a 14-day free trial of 500 credits (a card is required, nothing is charged during it): https://www.prometiam.com/signup?utm_source=mcp",
+          "placeholder": "Bearer rk_live_...",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
   "packages": [
     {
       "registryType": "npm",
       "identifier": "prometiam-risk-mcp",
-      "version": "0.4.54",
+      "version": "0.4.55",
       "transport": {
         "type": "stdio"
       },

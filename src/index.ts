@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Prometiam Company Data — MCP server.
+ * Prometiam Risk Intelligence — MCP server.
  *
  * Exposes the Prometiam Risk API as Model Context Protocol tools so any
  * MCP-compatible client (Claude Desktop, Cursor, Continue, Cline, etc.)
@@ -39,11 +39,13 @@ async function main() {
   const server = new McpServer(
     {
       name: 'prometiam-risk',
+      // What a person sees in a client's server list. `name` stays the id clients key on (D183, 4 Nov 2026).
+      title: 'Prometiam Risk Intelligence',
       // Keep in step with package.json AND the client.ts User-Agent — this is
       // the version MCP clients display. It has drifted twice now (0.2.0 while
       // the package shipped 0.2.2; 0.2.4 while it shipped 0.2.5), so when you
       // bump, grep the whole package for the old string.
-      version: '0.4.54',
+      version: '0.4.55',
     },
     {
       instructions:
@@ -57,10 +59,15 @@ async function main() {
   )
 
   for (const tool of TOOLS) {
-    server.tool(
+    // registerTool, not tool(): it carries the top-level title and the annotations (readOnlyHint, destructiveHint, ...) that tools/list serves.
+    server.registerTool(
       tool.name,
-      tool.description,
-      tool.schema.shape,
+      {
+        title: tool.annotations.title,
+        description: tool.description,
+        inputSchema: tool.schema.shape,
+        annotations: tool.annotations,
+      },
       async (args: Record<string, unknown>) => {
         const result = await tool.handler(args)
         return {

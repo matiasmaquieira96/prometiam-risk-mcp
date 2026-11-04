@@ -70,7 +70,7 @@ export class RiskApiClient {
     this.baseUrl = (opts.baseUrl ?? process.env.PROMETIAM_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/+$/, '')
     this.timeoutMs = opts.timeoutMs ?? 15000
     // Keep in step with package.json and the serverInfo.version in index.ts.
-    this.userAgent = opts.userAgent ?? `prometiam-risk-mcp/0.4.54 (+https://www.prometiam.com)`
+    this.userAgent = opts.userAgent ?? `prometiam-risk-mcp/0.4.55 (+https://www.prometiam.com)`
   }
 
   /**

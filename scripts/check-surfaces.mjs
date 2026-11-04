@@ -22,14 +22,19 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { listProblems, readTools } from './tool-annotations.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
+// The hosted server (docs/mcp-remote.md) is a fifth surface: its tools.ts is a generated copy deployed on its own, so it can sit behind the
+// package with no version number to show it, and the registry entry lists it as a remote.
+const HOSTED_URL = 'https://api.prometiam.com/functions/v1/mcp'
 const PKG_NAME = 'prometiam-risk-mcp'
 const MIRROR = 'matiasmaquieira96/prometiam-risk-mcp'
-const MCP_NAME = 'io.github.matiasmaquieira96/risk-mcp'
+// D183 (4 Nov 2026): the DNS-verified name. The old io.github.matiasmaquieira96/risk-mcp entry stays in the registry untouched, at the version it has.
+const MCP_NAME = 'com.prometiam/risk-mcp'
 // The registry has no exact-name lookup; ?name= ignores the filter and ?search=prometiam
 // returns nothing, because the server's NAME contains neither. Search the namespace owner.
-const REGISTRY_SEARCH = 'matiasmaquieira96'
+const REGISTRY_SEARCH = 'com.prometiam'
 // Smithery qualified name. Org-owned namespace, created 2026-08-30 -- an account starts
 // with a personal namespace only, and publishing to one that does not exist fails with a
 // bare 404 "Namespace not found".
@@ -81,6 +86,9 @@ for (const c of COUNTRIES) {
   if (!localServer.description.includes(c)) {
     problems.push(`server.json description omits ${c} — it is a live country and belongs in the public listing`)
   }
+}
+if (!localServer.remotes?.some((r) => r.type === 'streamable-http' && r.url === HOSTED_URL)) {
+  problems.push(`server.json lists no streamable-http remote at ${HOSTED_URL} — the registry entry would offer the npm package only`)
 }
 
 // ── npm ───────────────────────────────────────────────────────────────────────
@@ -156,14 +164,41 @@ try {
         problems.push(`MCP registry listing omits ${c}: "${sv.description}"`)
       }
     }
-    // The listing used to point at the PRIVATE repo, so every click from the registry 404'd.
+    if (!sv.remotes?.some((r) => r.url === HOSTED_URL)) {
+      problems.push(`MCP registry listing has no remote at ${HOSTED_URL} — publish a new version (the registry refuses a version it already holds) with: mcp-publisher publish`)
+    }
+    // The listing used to point at the PRIVATE repo, so every click from the registry 404'd. The com.prometiam entry carries no repository
+    // at all (D183: no personal handle in a public field), which is fine; a repository, if one is ever set, must be the public mirror.
     const repo = sv.repository?.url || ''
-    if (!repo.includes('prometiam-risk-mcp')) {
+    if (repo && !repo.includes('prometiam-risk-mcp')) {
       problems.push(`MCP registry repository URL is ${repo} — must point at the PUBLIC mirror, not a private repo`)
     }
   }
 } catch (e) {
   problems.push(`could not read the MCP registry: ${e.message}`)
+}
+
+// ── hosted endpoint ───────────────────────────────────────────────────────────
+// Directory reviews (Claude, ChatGPT) connect to this URL and read tools/list: it must serve the tools and the annotations the source has.
+try {
+  const res = await fetch(HOSTED_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'User-Agent': 'prometiam-surface-check' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const served = (await res.json()).result?.tools ?? []
+  const tools = readTools(readFileSync(join(ROOT, 'src/tools.ts'), 'utf8'))
+  const redeploy = 'run: node supabase/functions/mcp/check.mjs --write, then node scripts/deploy-fn.mjs mcp'
+  if (served.map((t) => t.name).join() !== tools.map((t) => t.name).join()) {
+    problems.push(`hosted endpoint serves ${served.length} tools, the source has ${tools.length} (or in another order) — ${redeploy}`)
+  }
+  const differences = listProblems(served, tools)
+  if (differences.length) {
+    problems.push(`hosted endpoint tools/list differs from the source in ${differences.length} place(s), e.g. ${differences[0]} — ${redeploy}`)
+  }
+} catch (e) {
+  problems.push(`could not read the hosted endpoint: ${e.message}`)
 }
 
 // ── third-party catalogs ──────────────────────────────────────────────────────

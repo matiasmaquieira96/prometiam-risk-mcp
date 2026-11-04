@@ -7,6 +7,9 @@
  * in src/tools.ts. This is what stops the MCP server from silently drifting
  * behind the API the way it did before (8 tools for 17 endpoints).
  *
+ * It also fails if a tool lacks its annotations (title, readOnlyHint, destructiveHint, openWorldHint; idempotentHint on writers), if a handler
+ * contradicts them (a DELETE or a changing POST under readOnlyHint: true), or if src/index.ts stops passing them on: directory reviews read them.
+ *
  * Runs automatically on `prepublishOnly`, so a stale server can't be published.
  * Run manually any time with:  npm run check:parity
  *
@@ -17,6 +20,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { annotationProblems, readTools } from './tool-annotations.mjs'
 
 const dir = path.dirname(fileURLToPath(import.meta.url))
 const openapiPath = path.resolve(dir, '../../../public/openapi.json')
@@ -59,3 +63,17 @@ console.log(`✓ MCP parity OK — all ${apiPaths.size} documented API endpoints
 if (undocumented.length) {
   console.warn('  note: tool endpoints not in openapi.json (fine if intentional): ' + undocumented.join(', '))
 }
+
+// Tool annotations: stated on every tool, consistent with what its handler does, and passed on by the stdio server.
+const tools = readTools(toolsSrc)
+const wrong = tools.flatMap((t) => annotationProblems(t).map((p) => `${t.name}: ${p}`))
+const indexSrc = fs.readFileSync(path.resolve(dir, '../src/index.ts'), 'utf8')
+if (!/title:\s*tool\.annotations\.title/.test(indexSrc) || !/annotations:\s*tool\.annotations/.test(indexSrc)) {
+  wrong.push('src/index.ts: registerTool must pass title: tool.annotations.title and annotations: tool.annotations')
+}
+if (wrong.length) {
+  console.error('✗ MCP ANNOTATIONS FAILED:')
+  for (const w of wrong) console.error('    ' + w)
+  process.exit(1)
+}
+console.log(`✓ MCP annotations OK — all ${tools.length} tools state title, readOnlyHint, destructiveHint and openWorldHint (${tools.filter((t) => !t.annotations.readOnlyHint).length} change the account).`)

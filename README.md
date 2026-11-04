@@ -1,6 +1,6 @@
-# `prometiam-risk-mcp`
+# Prometiam Risk Intelligence (`prometiam-risk-mcp`)
 
-> Model Context Protocol server for the **Prometiam company data API** — official company-registry data for Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium, Denmark, Estonia, Slovakia, Switzerland, Latvia, Cyprus, Romania, Lithuania, Canada, Australia, Japan, Israel, Singapore, Colombia, Taiwan, Czech Republic, Germany, the Netherlands, Brazil, Argentina, Ukraine, Serbia, Ecuador, Chile and the United States (state registers, SEC EDGAR, GLEIF), plus directors, corporate events, insolvency, VAT/LEI lookup, sanctions screening, annual financial statements, public-procurement awards (Spain, France, the UK, Ireland, Poland, Norway) and public-buyer risk scores (Spain, France), as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
+> Model Context Protocol server for the **Prometiam Risk Intelligence API** — official company-registry data for Spain, France, the UK, Ireland, Poland, Norway, Finland, Sweden, Croatia, Belgium, Denmark, Estonia, Slovakia, Switzerland, Latvia, Cyprus, Romania, Lithuania, Canada, Australia, Japan, Israel, Singapore, Colombia, Taiwan, Czech Republic, Germany, the Netherlands, Brazil, Argentina, Ukraine, Serbia, Ecuador, Chile and the United States (state registers, SEC EDGAR, GLEIF), plus directors, corporate events, insolvency, VAT/LEI lookup, sanctions screening, annual financial statements, public-procurement awards (Spain, France, the UK, Ireland, Poland, Norway) and public-buyer risk scores (Spain, France), as native MCP tools for Claude Desktop, Cursor, Continue, Cline, and any MCP-compatible client.
 
 [![npm version](https://img.shields.io/npm/v/prometiam-risk-mcp.svg)](https://www.npmjs.com/package/prometiam-risk-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -8,7 +8,7 @@
 
 ## What you get
 
-36 MCP tools that wrap the [Prometiam Risk API](https://www.prometiam.com/risk-api/docs?utm_source=npm&utm_medium=readme):
+36 MCP tools that wrap the [Prometiam Risk Intelligence API](https://www.prometiam.com/risk-api/docs?utm_source=npm&utm_medium=readme):
 
 | Tool | Description |
 |---|---|
@@ -126,7 +126,7 @@ Windsurf (`mcp_config.json`):
 }
 ```
 
-claude.ai and ChatGPT connectors: not yet. They need OAuth sign-in, which the hosted endpoint does not offer yet.
+claude.ai and ChatGPT connectors: add `https://api.prometiam.com/functions/v1/mcp/connect` and sign in with your Prometiam account (needs a plan or free trial; calls use its credits; disconnect on the API Tokens page; a connection lasts 30 days).
 
 ## Use with Claude Desktop
 
@@ -222,14 +222,14 @@ Per Prometiam tier (returned in every response's `meta.rate_limit`). Every succe
 
 ## Privacy and data residency
 
-- All requests hit the Prometiam Risk API in **EU** (AWS eu-central-1, Frankfurt).
+- All requests hit the Prometiam Risk Intelligence API in **EU** (AWS eu-central-1, Frankfurt).
 - The MCP server adds **no telemetry of its own** — it just forwards requests to the API.
 - Officer data is processed under GDPR Article 6(1)(c) (legal obligation of public registries) and 6(1)(f) (legitimate interest in fraud prevention).
 - Mostly read-only. The mutating tools are `monitor_subscribe`, `monitor_stop`, `sanctions_watch` and `sanctions_unwatch` (create or delete a monitoring subscription or a sanctions watchlist entry tied to your key); every other tool is read-only.
 
 ## Source
 
-This package is open source under the MIT license. The Risk API itself is a commercial service — see <https://www.prometiam.com/mcp> for the install page, or <https://www.prometiam.com?utm_source=npm&utm_medium=readme> for terms.
+This package is open source under the MIT license. The Prometiam Risk Intelligence API itself is a commercial service — see <https://www.prometiam.com/mcp> for the install page, or <https://www.prometiam.com?utm_source=npm&utm_medium=readme> for terms.
 
 - API documentation: <https://www.prometiam.com/risk-api/docs?utm_source=npm&utm_medium=readme>
 - OpenAPI 3.0 spec: <https://www.prometiam.com/openapi.json>

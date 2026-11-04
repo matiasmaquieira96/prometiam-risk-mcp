@@ -1,62 +1,39 @@
-name: Publish to MCP registry
+name: Retire the old registry name
 
-# Publishes server.json to the official MCP registry (registry.modelcontextprotocol.io)
-# using GitHub Actions OIDC — no stored secrets and no personal access tokens.
-#
-# The server namespace is io.github.matiasmaquieira96/risk-mcp, and the registry authorises
-# publication by checking the OIDC token's repository_owner claim. This repository is owned by
-# matiasmaquieira96, so the claim matches and the publish is allowed.
-#
-# The registry requires server.json's version to equal the version already published on npm,
-# and the npm package must carry a matching `mcpName` field to prove ownership. Both hold for
-# 0.2.2, so run this only after `npm publish` has landed.
+# From 0.4.55 (4 Nov 2026) the server is listed in the official MCP registry (registry.modelcontextprotocol.io) as
+# com.prometiam/risk-mcp, a name proved by a DNS record on prometiam.com and published from the maintainers' machine.
+# GitHub OIDC can only act for io.github.matiasmaquieira96/*, so this job no longer publishes: it marks every version of
+# the old name io.github.matiasmaquieira96/risk-mcp deprecated, pointing to the new one. It runs when this file changes
+# or by hand; running it again only repeats the same status.
 
 on:
   workflow_dispatch: {}
   push:
     branches: [main]
     paths:
-      - 'server.json'
       - '.github/workflows/publish-registry.yml'
 
 jobs:
-  publish:
+  deprecate-old-name:
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # required to mint the OIDC token
       contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install mcp-publisher
+      - name: Install mcp-publisher 1.8.7 (checked against the release's checksums file)
         run: |
-          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/download/v1.8.0/mcp-publisher_linux_amd64.tar.gz" -o mcp-publisher.tar.gz
-          tar -xzf mcp-publisher.tar.gz mcp-publisher
-          chmod +x mcp-publisher
+          base=https://github.com/modelcontextprotocol/registry/releases/download/v1.8.7
+          curl -fsSL "$base/mcp-publisher_linux_amd64.tar.gz" -o mcp-publisher_linux_amd64.tar.gz
+          curl -fsSL "$base/registry_1.8.7_checksums.txt" -o checksums.txt
+          sha256sum -c --ignore-missing checksums.txt
+          tar -xzf mcp-publisher_linux_amd64.tar.gz mcp-publisher
           ./mcp-publisher --help >/dev/null
 
       - name: Log in via GitHub OIDC
         run: ./mcp-publisher login github-oidc
 
-      - name: Publish server.json
-        # Idempotent on purpose. This job fires on any push that touches server.json, but the
-        # registry rejects a version it already holds with
-        #   400 {"message":"invalid version: cannot publish duplicate version"}
-        # That happens whenever server.json is edited without a version bump, or when a release
-        # was already published by hand — which is exactly what failed run 30396469548 on
-        # 2026-07-28. A already-published version is the desired end state, not an error, so
-        # treat that one message as success and let every other failure fail the job.
+      - name: Deprecate every version of the old name
         run: |
-          # pipefail is REQUIRED: the default runner shell is `bash -e {0}` without it, so the
-          # exit status of `publish | tee` would be tee's (always 0) and this guard would pass
-          # every failure through silently.
-          set -o pipefail
-          if ./mcp-publisher publish 2>&1 | tee publish.log; then
-            echo "published $(grep -o 'version .*' publish.log | tail -1)"
-          elif grep -q 'cannot publish duplicate version' publish.log; then
-            echo "::notice::registry already holds this version — nothing to publish"
-          else
-            echo "::error::publish failed for a reason other than duplicate version"
-            exit 1
-          fi
+          ./mcp-publisher status --status deprecated --all-versions \
+            --message "Renamed: this server is now com.prometiam/risk-mcp (same npm package, prometiam-risk-mcp)" \
+            io.github.matiasmaquieira96/risk-mcp
