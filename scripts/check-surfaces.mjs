@@ -40,9 +40,12 @@ const REGISTRY_SEARCH = 'com.prometiam'
 // bare 404 "Namespace not found".
 const SMITHERY_NAME = 'prometiam/risk-mcp'
 
-// Every country that must appear in any public description of this server. Norway shipped
-// 2026-07-26 and was missing from the registry listing for two days; this catches the next one.
-const COUNTRIES = ['Spain', 'France', 'Ireland', 'Poland', 'Norway', 'Finland', 'Sweden', 'Croatia', 'Belgium', 'Denmark']
+// Every country that must appear, as its code, in the npm description (the origin of most third-party listings). Norway shipped
+// 2026-07-26 and was missing from the registry listing for two days; this catches the next one. server.json and the MCP registry
+// hold 100 characters, room for "<N> countries" only (0.4.55): every surface must state server.json's N.
+const COUNTRIES = ['ES', 'FR', 'IE', 'PL', 'NO', 'FI', 'SE', 'HR', 'BE', 'DK']
+const has = (text, code) => new RegExp(`\\b${code}\\b`).test(text || '')
+const countOf = (text) => (String(text || '').match(/(\d+) countries/) || [])[1] ?? null
 
 const problems = []
 const notes = []
@@ -82,11 +85,8 @@ if (local.mcpName !== MCP_NAME) {
     problems.push(`package-lock.json version ${lock.version} != package.json ${local.version} — run: npm install --package-lock-only`)
   }
 }
-for (const c of COUNTRIES) {
-  if (!localServer.description.includes(c)) {
-    problems.push(`server.json description omits ${c} — it is a live country and belongs in the public listing`)
-  }
-}
+const N = countOf(localServer.description)
+if (!N) problems.push(`server.json description states no "<N> countries": "${localServer.description}"`)
 if (!localServer.remotes?.some((r) => r.type === 'streamable-http' && r.url === HOSTED_URL)) {
   problems.push(`server.json lists no streamable-http remote at ${HOSTED_URL} — the registry entry would offer the npm package only`)
 }
@@ -109,10 +109,11 @@ try {
   // description propagated outward unnoticed -- on 2026-08-30 both Glama and PulseMCP still
   // advertised five countries, Norway missing, five weeks after it shipped.
   for (const c of COUNTRIES) {
-    if (!(npm.description || '').includes(c)) {
+    if (!has(npm.description, c)) {
       problems.push(`npm description omits ${c} — third-party catalogs scrape this field: "${npm.description}"`)
     }
   }
+  if (countOf(npm.description) !== N) problems.push(`npm description says ${countOf(npm.description)} countries, server.json ${N}: "${npm.description}"`)
 } catch (e) {
   problems.push(`could not read npm: ${e.message}`)
 }
@@ -129,7 +130,7 @@ try {
   if (!meta.description) problems.push('GitHub mirror has no description — it is a search/discovery surface')
   else {
     for (const c of COUNTRIES) {
-      if (!meta.description.includes(c)) {
+      if (!has(meta.description, c)) {
         notes.push(`GitHub mirror description omits ${c}: "${meta.description}"`)
       }
     }
@@ -159,10 +160,8 @@ try {
     if (sv.version !== local.version) {
       problems.push(`MCP registry is at ${sv.version}, local is ${local.version} — push server.json to the mirror (CI publishes it) or run: mcp-publisher publish`)
     }
-    for (const c of COUNTRIES) {
-      if (!sv.description.includes(c)) {
-        problems.push(`MCP registry listing omits ${c}: "${sv.description}"`)
-      }
+    if (countOf(sv.description) !== N) {
+      problems.push(`MCP registry listing says ${countOf(sv.description)} countries, server.json ${N}: "${sv.description}"`)
     }
     if (!sv.remotes?.some((r) => r.url === HOSTED_URL)) {
       problems.push(`MCP registry listing has no remote at ${HOSTED_URL} — publish a new version (the registry refuses a version it already holds) with: mcp-publisher publish`)
@@ -231,7 +230,7 @@ try {
       notes.push(`smithery listing has an empty description (replica may be stale; authoritative copy is api.smithery.ai) — fix with PATCH /servers/${encodeURIComponent(SMITHERY_NAME)}`)
     } else {
       for (const c of COUNTRIES) {
-        if (!desc.includes(c)) notes.push(`smithery listing omits ${c}`)
+        if (!has(desc, c)) notes.push(`smithery listing omits ${c}`)
       }
     }
   }

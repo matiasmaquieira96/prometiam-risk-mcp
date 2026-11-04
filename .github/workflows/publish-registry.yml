@@ -33,7 +33,8 @@ jobs:
         run: ./mcp-publisher login github-oidc
 
       - name: Deprecate every version of the old name
+        # --all-versions lists the versions and asks "Continue? [y/N]"; with no answer the 4 Nov run read N and changed nothing
         run: |
-          ./mcp-publisher status --status deprecated --all-versions \
+          echo y | ./mcp-publisher status --status deprecated --all-versions \
             --message "Renamed: this server is now com.prometiam/risk-mcp (same npm package, prometiam-risk-mcp)" \
             io.github.matiasmaquieira96/risk-mcp
