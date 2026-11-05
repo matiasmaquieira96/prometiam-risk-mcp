@@ -3,7 +3,7 @@
   "name": "com.prometiam/risk-mcp",
   "title": "Prometiam Risk Intelligence",
   "description": "Company data and KYB API for 35 countries: monitoring, financial statements, insolvency, sanctions",
-  "version": "0.4.55",
+  "version": "0.4.56",
   "websiteUrl": "https://www.prometiam.com/risk-api",
   "remotes": [
     {
@@ -24,7 +24,7 @@
     {
       "registryType": "npm",
       "identifier": "prometiam-risk-mcp",
-      "version": "0.4.55",
+      "version": "0.4.56",
       "transport": {
         "type": "stdio"
       },
